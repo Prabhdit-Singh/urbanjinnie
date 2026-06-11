@@ -1,0 +1,409 @@
+/* =========================================================================
+ * CANDY SURGE 1000 — casino shell styling (dark casino theme)
+ * ========================================================================= */
+:root {
+  --bg: #1a2c38;
+  --panel: #213743;
+  --panel-2: #0f212e;
+  --line: #2f4553;
+  --text: #b1bad3;
+  --text-strong: #ffffff;
+  --green: #00e701;
+  --green-dark: #00b801;
+  --gold: #ffc83d;
+  --pink: #ff7ad9;
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+}
+
+#app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- top bar ------------------------------------------------------------ */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  background: var(--panel-2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.brand {
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--text-strong);
+  font-size: 15px;
+}
+
+.brand-mark { color: var(--green); }
+
+.balance-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 8px 6px 14px;
+}
+
+.balance-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+#balance { color: var(--text-strong); font-weight: 700; }
+
+/* ---- game card ----------------------------------------------------------- */
+.game-card {
+  width: min(1180px, calc(100% - 24px));
+  margin: 18px auto 28px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.game-shell {
+  display: flex;
+  min-height: 560px;
+  flex: 1;
+}
+
+/* ---- bet panel ------------------------------------------------------------ */
+.panel {
+  width: 290px;
+  flex: 0 0 290px;
+  background: var(--panel);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-right: 1px solid var(--panel-2);
+}
+
+.tabs {
+  display: flex;
+  background: var(--panel-2);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.tab {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-weight: 700;
+  padding: 8px 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.tab.active { background: var(--line); color: var(--text-strong); }
+
+.field-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.field-head label { font-weight: 600; font-size: 13px; }
+
+.muted { color: #7f8da0; }
+.small { font-size: 12px; }
+
+.bet-row { display: flex; gap: 6px; }
+.bet-row.minmax, .auto-row { margin-top: 6px; }
+.auto-row { display: flex; gap: 6px; }
+
+#betInput {
+  flex: 1;
+  min-width: 0;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text-strong);
+  font-weight: 700;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+#betInput:focus { outline: none; border-color: #4a6a7f; }
+
+.mini-btn {
+  background: var(--line);
+  color: var(--text-strong);
+  border: 0;
+  border-radius: 6px;
+  font-weight: 700;
+  padding: 0 14px;
+  min-height: 38px;
+  cursor: pointer;
+}
+
+.mini-btn:hover { background: #3c5667; }
+.mini-btn.wide { flex: 1; }
+.mini-btn.active { background: var(--green); color: #06310a; }
+
+/* ante toggle */
+.ante {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ante-knob {
+  flex: 0 0 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--line);
+  position: relative;
+  transition: background 0.15s;
+}
+
+.ante-knob::after {
+  content: "";
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.15s;
+}
+
+.ante.on .ante-knob { background: var(--green); }
+.ante.on .ante-knob::after { left: 19px; }
+
+.ante-text b { color: var(--text-strong); display: block; font-size: 13px; }
+.ante-text small { font-size: 11px; }
+
+/* buy + spin buttons */
+.buy-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 12px;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  color: #4d2c00;
+  background: linear-gradient(180deg, #ffe9a8, var(--gold) 55%, #e08a00);
+  box-shadow: 0 2px 0 #9a5f00;
+}
+
+.buy-btn:hover:not(:disabled) { filter: brightness(1.06); }
+.buy-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.spin-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 16px;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  color: #052d05;
+  background: var(--green);
+  box-shadow: 0 2px 0 var(--green-dark);
+  transition: transform 0.05s;
+}
+
+.spin-btn:hover:not(:disabled) { filter: brightness(1.08); }
+.spin-btn:active:not(:disabled) { transform: translateY(1px); }
+.spin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.spin-btn.stop { background: #ff4d4d; box-shadow: 0 2px 0 #b32424; color: #fff; }
+.spin-btn.gold { background: linear-gradient(180deg, #ffe9a8, var(--gold) 55%, #e08a00); color: #4d2c00; box-shadow: 0 2px 0 #9a5f00; }
+
+.panel-foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lastwin { font-size: 12px; }
+.lastwin b { color: var(--gold); }
+
+.icon-row { display: flex; gap: 6px; }
+
+.icon-btn {
+  background: var(--line);
+  color: var(--text-strong);
+  border: 0;
+  border-radius: 6px;
+  min-width: 32px;
+  min-height: 32px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.icon-btn:hover { background: #3c5667; }
+.icon-btn.on { background: var(--green); color: #06310a; }
+
+.status {
+  margin: 0;
+  font-size: 12px;
+  color: #7f8da0;
+  min-height: 16px;
+}
+
+/* ---- stage ------------------------------------------------------------ */
+.stage {
+  flex: 1;
+  position: relative;
+  background: var(--panel-2);
+  min-height: 420px;
+}
+
+.stage canvas { display: block; position: absolute; inset: 0; }
+
+/* ---- footer ------------------------------------------------------------ */
+.game-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--panel-2);
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.pub-logo {
+  flex: 0 0 auto;
+  border: 1.5px dashed #56708a;
+  border-radius: 6px;
+  color: #8aa1b8;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-align: center;
+  padding: 8px 14px;
+  line-height: 1.4;
+}
+
+.footer-mid { display: flex; flex-direction: column; gap: 2px; }
+.footer-mid b { color: var(--text-strong); letter-spacing: 0.06em; }
+
+.footer-right {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+}
+
+/* ---- modals ------------------------------------------------------------ */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 12, 20, 0.72);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  padding: 16px;
+}
+
+.modal.open { display: flex; }
+
+.modal-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  width: min(640px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.6);
+}
+
+.modal-card.wide { width: min(760px, 100%); }
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.modal-head h2 { margin: 0; color: var(--text-strong); font-size: 18px; }
+
+.buy-cards { display: flex; gap: 12px; }
+
+.buy-card {
+  flex: 1;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.buy-card.super { border-color: var(--gold); box-shadow: 0 0 18px rgba(255, 200, 61, 0.15) inset; }
+.buy-card h3 { margin: 0; color: var(--text-strong); letter-spacing: 0.06em; font-size: 14px; }
+.buy-card p { margin: 0; font-size: 12px; line-height: 1.5; flex: 1; }
+.buy-price { font-size: 22px; font-weight: 800; color: var(--gold); }
+.buy-mult { font-size: 11px; color: #7f8da0; margin-top: -6px; }
+
+.info-scroll { overflow-y: auto; padding-right: 6px; }
+.info-scroll h3 { color: var(--text-strong); margin: 14px 0 8px; }
+.info-scroll ul { margin: 0; padding-left: 18px; line-height: 1.65; }
+
+#paytableGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.pt-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.pt-row canvas { flex: 0 0 56px; }
+
+.pt-vals { font-size: 11px; display: flex; flex-wrap: wrap; gap: 3px 10px; }
+.pt-vals b { width: 100%; color: var(--text-strong); font-size: 12px; }
+.pt-vals em { font-style: normal; color: var(--gold); font-weight: 700; }
+
+/* ---- responsive --------------------------------------------------------- */
+@media (max-width: 860px) {
+  .game-shell { flex-direction: column-reverse; }
+  .panel { width: 100%; flex: 0 0 auto; border-right: 0; border-top: 1px solid var(--panel-2); }
+  .stage { min-height: 56vh; }
+  .buy-cards { flex-direction: column; }
+  #paytableGrid { grid-template-columns: 1fr; }
+}
