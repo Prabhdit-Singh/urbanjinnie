@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Critter Clash 1000 — Demo</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- ================= 1/20. CASINO LOBBY ================= -->
+    <section id="screenLobby" class="screen open">
+      <header class="lobby-top">
+        <div class="brand"><span class="brand-mark">▰</span> MONSTER CASINO</div>
+        <div class="lobby-top-right">
+          <div class="balance-pill"><span class="coin">●</span><span id="lobbyBalance">$0.00</span></div>
+          <button class="chip-btn" id="btnBuyCoins" title="Demo only">BUY COINS</button>
+        </div>
+      </header>
+      <div class="lobby-body">
+        <nav class="lobby-side">
+          <button class="side-btn active" title="Slots">🎰</button>
+          <button class="side-btn" title="Favorites">⭐</button>
+          <button class="side-btn" title="Table games">🃏</button>
+          <button class="side-btn" title="Promotions">🎁</button>
+          <button class="side-btn" id="btnLobbyReset" title="Reset demo balance">↺</button>
+        </nav>
+        <main class="lobby-main">
+          <h2>Slots</h2>
+          <div class="tile-grid">
+            <button class="tile featured" id="tileCritter">
+              <span class="tile-art critter"><canvas id="tileArt" width="80" height="80"></canvas></span>
+              <span class="tile-logo">CRITTER<br>CLASH<br><em>1000</em></span>
+              <span class="tile-tag new">NEW</span>
+            </button>
+            <a class="tile candy" href="../index.html">
+              <span class="tile-name">CANDY<br>SURGE<br><em>1000</em></span>
+              <span class="tile-tag">PLAY</span>
+            </a>
+            <button class="tile soon" disabled><span class="tile-name">DRAGONS<br>HOARD</span><span class="tile-tag">SOON</span></button>
+            <button class="tile soon" disabled><span class="tile-name">TREASURE<br>KRAKEN</span><span class="tile-tag">SOON</span></button>
+            <button class="tile soon" disabled><span class="tile-name">JUNGLE<br>FURY</span><span class="tile-tag">SOON</span></button>
+            <button class="tile soon" disabled><span class="tile-name">STAR<br>SPIN</span><span class="tile-tag">SOON</span></button>
+            <button class="tile soon" disabled><span class="tile-name">LUCKY<br>COINS</span><span class="tile-tag">SOON</span></button>
+            <button class="tile soon" disabled><span class="tile-name">PHOENIX<br>RISE</span><span class="tile-tag">SOON</span></button>
+          </div>
+          <p class="lobby-foot">Find Critter Clash 1000 in the Slots lobby. Demo build — no real money.</p>
+        </main>
+      </div>
+    </section>
+
+    <!-- ================= 2/20. GAME INFO SCREEN ================= -->
+    <section id="screenInfo" class="screen">
+      <div class="info-card">
+        <div class="game-logo big">CRITTER CLASH <em>1000</em></div>
+        <div class="info-sub">6×5 CREATURE BATTLE SLOT</div>
+        <ul class="info-points">
+          <li><b>⚔</b> When 2+ creatures land in the <b>same column</b>, they battle!</li>
+          <li><b>✚</b> Every winning column multiplier <b>adds together</b> into one spin multiplier.</li>
+          <li><b>🎟</b> 3+ Battle Arena Tickets award <b>10 Free Spins</b> with carry-over multipliers.</li>
+        </ul>
+        <div class="creature-strip" id="infoCreatures"></div>
+        <button id="btnInfoPlay" class="cta-btn">ENTER THE ARENA</button>
+        <button id="btnInfoBack" class="ghost-btn">← Back to Lobby</button>
+      </div>
+    </section>
+
+    <!-- ================= 3/20. LOADING SCREEN ================= -->
+    <section id="screenLoading" class="screen">
+      <div class="loading-art">
+        <div class="loading-island"></div>
+        <div class="game-logo huge">CRITTER CLASH <em>1000</em></div>
+        <div class="load-bar"><div id="loadFill" class="load-fill"></div></div>
+        <div id="loadPct" class="load-pct">LOADING… 0%</div>
+      </div>
+    </section>
+
+    <!-- ================= 4/20. MAIN GAME SCREEN ================= -->
+    <section id="screenGame" class="screen">
+      <header class="game-top">
+        <button id="btnExit" class="icon-btn" title="Exit to lobby">←</button>
+        <div class="game-logo small">CRITTER CLASH <em>1000</em></div>
+        <div class="game-top-right">
+          <div class="balance-pill small"><span class="coin">●</span><span id="balance">$0.00</span></div>
+          <button id="btnHistory" class="icon-btn" title="Game history">🕘</button>
+          <button id="btnSettings" class="icon-btn" title="Settings">⚙</button>
+          <button id="btnRules" class="icon-btn" title="Rules &amp; paytable">ⓘ</button>
+        </div>
+      </header>
+
+      <div class="stage"><canvas id="game"></canvas></div>
+
+      <footer class="game-bottom">
+        <button id="btnBet" class="pill-btn" title="Bet settings">
+          <small>BET</small><b id="betLabel">$1.00</b>
+        </button>
+        <button id="btnBuy" class="pill-btn gold" title="Bonus buy"><small>BUY</small><b>FREE SPINS</b></button>
+        <button id="btnSpin" class="spin-circle" title="Spin (Space)">SPIN</button>
+        <button id="btnTurbo" class="pill-btn" title="Turbo"><small>TURBO</small><b id="turboLabel">OFF</b></button>
+        <div class="pill-stat"><small>WIN</small><b id="lastWin">—</b></div>
+      </footer>
+      <p id="statusLine" class="status">Loading…</p>
+    </section>
+
+    <!-- ============ overlays (battle / wins / free spins) ============ -->
+    <div id="ovBattle" class="overlay">
+      <div class="battle-split">
+        <div class="battle-side left">
+          <canvas id="battleLeft" width="160" height="160"></canvas>
+          <div class="battle-mult" id="battleLeftMult">x3</div>
+          <div class="battle-name" id="battleLeftName">Blazepup</div>
+        </div>
+        <div class="battle-vs">VS</div>
+        <div class="battle-side right">
+          <canvas id="battleRight" width="160" height="160"></canvas>
+          <div class="battle-mult" id="battleRightMult">x5</div>
+          <div class="battle-name" id="battleRightName">Aquash</div>
+        </div>
+      </div>
+      <div class="battle-caption" id="battleCaption">THE BATTLE BEGINS!</div>
+    </div>
+
+    <div id="ovCalc" class="overlay">
+      <div class="calc-card">
+        <div class="calc-title">TOTAL MULTIPLIER</div>
+        <div class="calc-formula" id="calcFormula">x3 + x8 + x6 = x17</div>
+        <div class="calc-apply" id="calcApply">BASE WIN $4.20 × 17 = $71.40</div>
+      </div>
+    </div>
+
+    <div id="ovWin" class="overlay">
+      <div class="win-card">
+        <div class="win-title" id="winTitle">TOTAL WIN</div>
+        <div class="win-amount" id="winAmount">$0.00</div>
+        <div class="win-sub" id="winSub">Tap anywhere to continue</div>
+        <div class="coins" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+    </div>
+
+    <div id="ovFsTrigger" class="overlay">
+      <div class="fs-card">
+        <div class="fs-tickets"><canvas class="fs-ticket" width="90" height="90"></canvas><canvas class="fs-ticket" width="90" height="90"></canvas><canvas class="fs-ticket" width="90" height="90"></canvas></div>
+        <div class="fs-big" id="fsSpinsAwarded">10 FREE SPINS</div>
+        <div class="fs-sub">AWARDED! Battle multipliers carry over between spins.</div>
+      </div>
+    </div>
+
+    <div id="ovFsEnd" class="overlay">
+      <div class="fsend-card">
+        <div class="fsend-title">BONUS COMPLETE!</div>
+        <div class="fsend-rows">
+          <div class="fsend-row"><span>TOTAL BONUS WIN</span><b id="fsEndWin">$0.00</b></div>
+          <div class="fsend-row"><span>FREE SPINS PLAYED</span><b id="fsEndSpins">10</b></div>
+          <div class="fsend-row"><span>FINAL MULTIPLIER</span><b id="fsEndMult">x18</b></div>
+          <div class="fsend-row"><span>BEST SPIN</span><b id="fsEndBest">$0.00</b></div>
+        </div>
+        <button id="fsEndContinue" class="cta-btn">CONTINUE</button>
+      </div>
+    </div>
+
+    <!-- ============ 5/20. BET SETTINGS ============ -->
+    <div id="betModal" class="modal">
+      <div class="modal-card">
+        <div class="modal-head"><h2>Bet Settings</h2><button class="icon-btn modal-close" data-close="betModal">✕</button></div>
+        <div class="bet-stepper">
+          <button id="betDown" class="step-btn">−</button>
+          <div class="bet-value" id="betValue">$1.00</div>
+          <button id="betUp" class="step-btn">+</button>
+        </div>
+        <div class="bet-presets" id="betPresets"></div>
+        <div class="bet-summary">
+          <div><span>TOTAL BET</span><b id="betTotal">$1.00</b></div>
+          <div><span>BONUS BUY COST</span><b id="betBuyCost">$100.00</b></div>
+        </div>
+        <button id="betApply" class="cta-btn">APPLY</button>
+      </div>
+    </div>
+
+    <!-- ============ 17/20. SETTINGS ============ -->
+    <div id="settingsModal" class="modal">
+      <div class="modal-card">
+        <div class="modal-head"><h2>⚙ Settings</h2><button class="icon-btn modal-close" data-close="settingsModal">✕</button></div>
+        <div class="toggles" id="settingToggles">
+          <button class="toggle" data-setting="sound"><span class="knob"></span>SOUND</button>
+          <button class="toggle" data-setting="music"><span class="knob"></span>MUSIC</button>
+          <button class="toggle" data-setting="turbo"><span class="knob"></span>TURBO SPIN</button>
+          <button class="toggle" data-setting="shake"><span class="knob"></span>SCREEN SHAKE</button>
+          <button class="toggle" data-setting="battleAnim"><span class="knob"></span>BATTLE ANIMATION</button>
+          <button class="toggle" data-setting="winAnim"><span class="knob"></span>SHOW WIN ANIMATIONS</button>
+        </div>
+        <button class="cta-btn modal-close" data-close="settingsModal">SAVE &amp; CLOSE</button>
+      </div>
+    </div>
+
+    <!-- ============ 18/20. GAME HISTORY ============ -->
+    <div id="historyModal" class="modal">
+      <div class="modal-card">
+        <div class="modal-head"><h2>Game History</h2><button class="icon-btn modal-close" data-close="historyModal">✕</button></div>
+        <div class="history-scroll">
+          <table class="history-table">
+            <thead><tr><th>Date &amp; time</th><th>Bet</th><th>Win</th><th>Type</th></tr></thead>
+            <tbody id="historyRows"><tr><td colspan="4" class="muted">No spins yet.</td></tr></tbody>
+          </table>
+        </div>
+        <button class="cta-btn modal-close" data-close="historyModal">CLOSE</button>
+      </div>
+    </div>
+
+    <!-- ============ 19/20. EXIT CONFIRMATION ============ -->
+    <div id="exitModal" class="modal">
+      <div class="modal-card narrow">
+        <div class="exit-icon">✕</div>
+        <h2 class="center">EXIT GAME?</h2>
+        <p class="center muted">Are you sure you want to exit the game?</p>
+        <div class="exit-btns">
+          <button id="exitNo" class="ghost-btn red">NO</button>
+          <button id="exitYes" class="cta-btn slim">YES</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 14. bonus buy menu ============ -->
+    <div id="buyModal" class="modal">
+      <div class="modal-card">
+        <div class="modal-head"><h2>★ Buy Bonus</h2><button class="icon-btn modal-close" data-close="buyModal">✕</button></div>
+        <div class="buy-cards">
+          <div class="buy-card">
+            <h3>FREE SPINS</h3>
+            <p>Buy directly into <b>10+ Free Spins</b>. High chance of creature battles — multipliers <b>carry over</b> for the whole bonus.</p>
+            <div class="buy-price" id="buyCost">$80.00</div>
+            <div class="buy-mult">80× bet</div>
+            <button id="buyConfirm" class="cta-btn slim">BUY</button>
+          </div>
+          <div class="buy-card super">
+            <h3>SUPER FREE SPINS</h3>
+            <p><b>10+ Free Spins</b> with battles on nearly <b>every spin</b> and the hottest creature multiplier rolls.</p>
+            <div class="buy-price" id="superBuyCost">$200.00</div>
+            <div class="buy-mult">200× bet</div>
+            <button id="superBuyConfirm" class="cta-btn slim gold">BUY</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ rules / paytable ============ -->
+    <div id="rulesModal" class="modal">
+      <div class="modal-card wide">
+        <div class="modal-head"><h2>Game Info</h2><button class="icon-btn modal-close" data-close="rulesModal">✕</button></div>
+        <div class="info-scroll">
+          <h3>How to play</h3>
+          <ul>
+            <li><b>6×5 grid, pays anywhere:</b> card royals pay with 9+ matching symbols anywhere; creatures are premium and pay with just 3+.</li>
+            <li><b>Column Creature Battle:</b> every creature lands with a multiplier. When 2+ creatures land in the same column they battle — the <b>highest multiplier wins</b> the column. Equal top multipliers <b>combine</b> (x4 vs x4 → x8). 3+ creatures means a mini tournament with the same rules.</li>
+            <li><b>Total spin multiplier:</b> all winning column multipliers are <b>added together</b> and applied to the total symbol win — after wins are calculated.</li>
+            <li><b>Golden Egg (Wild):</b> counts toward every card-royal win, and adds <b>+x2</b> to any battle in its column.</li>
+            <li><b>Goldhorn:</b> the legendary beast rolls x10–x100, and its presence <b>doubles</b> the column winner.</li>
+            <li><b>Free Spins:</b> 3, 4, 5+ Battle Arena Tickets award 10, 12, 15 free spins. Battles happen more often, multipliers roll hotter, and winning battle multipliers <b>carry over for the whole bonus</b>. 3+ battles in one spin: <b>+2 extra spins</b>; 3+ tickets: +5 spins.</li>
+            <li><b>Bonus Buy:</b> buy free spins for 100× bet.</li>
+            <li><b>Max win:</b> 10,000× bet. The round ends when the cap is reached.</li>
+          </ul>
+          <h3>Creatures <span class="muted small">(battle multiplier ranges)</span></h3>
+          <div id="creatureTable"></div>
+          <h3>Paytable <span class="muted small">(× bet, pays anywhere)</span></h3>
+          <div id="paytableGrid"></div>
+          <h3>RTP</h3>
+          <p class="muted">Simulated RTP 96.2% (base and bonus buy). Demo entertainment build — no real-money play.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/symbols.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
