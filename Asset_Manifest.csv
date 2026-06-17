@@ -1,0 +1,31 @@
+category,id,name,type,file,status
+symbol,dr_nova,Dr. Nova,png,assets/symbols/dr_nova.png,awaiting-art
+symbol,nurse_bot,Nurse Bot,png,assets/symbols/nurse_bot.png,awaiting-art
+symbol,virus_king,Virus King,png,assets/symbols/virus_king.png,awaiting-art
+symbol,germ_blob,Germ Blob,png,assets/symbols/germ_blob.png,awaiting-art
+symbol,med_drone,Med Drone,png,assets/symbols/med_drone.png,awaiting-art
+symbol,serum_vial,Serum Vial,png,assets/symbols/serum_vial.png,awaiting-art
+symbol,bio_capsule,Bio Capsule,png,assets/symbols/bio_capsule.png,awaiting-art
+symbol,lab_crystal,Lab Crystal,png,assets/symbols/lab_crystal.png,awaiting-art
+symbol,ace,A,png,assets/symbols/ace.png,awaiting-art
+symbol,king,K,png,assets/symbols/king.png,awaiting-art
+symbol,queen,Q,png,assets/symbols/queen.png,awaiting-art
+symbol,jack,J,png,assets/symbols/jack.png,awaiting-art
+symbol,ten,10,png,assets/symbols/ten.png,awaiting-art
+symbol,wild,Wild Med Kit,png,assets/symbols/wild_med_kit.png,awaiting-art
+symbol,scatter,Lab Portal,png,assets/symbols/lab_portal.png,awaiting-art
+symbol,orb,Serum Multiplier Orb,png,assets/symbols/serum_multiplier_orb.png,awaiting-art
+code,config,Math configuration,js,js/config.js,done
+code,engine,Math engine (event book),js,js/engine.js,done
+code,renderer,Playback renderer,js,js/renderer.js,done
+code,screens,Screen/state manager,js,js/screens.js,done
+code,ui,Casino shell UI,js,js/ui.js,done
+code,symbols,Symbol art loader,js,js/symbols.js,done
+code,audio,WebAudio SFX,js,js/audio.js,done
+code,main,Bootstrap,js,js/main.js,done
+doc,spec,Developer specification,md,Claude_MedBot_Invasion_1000_Spec.md,done
+doc,readme,Readme,md,README.md,done
+tool,simulate,RTP simulator,js,tools/simulate.js,done
+tool,verify_book,Book contract checks,js,tools/verify_book.js,done
+tool,smoke_render,Headless render test,js,tools/smoke_render.js,done
+tool,browser_test,Playwright E2E,js,tools/browser_test.js,done

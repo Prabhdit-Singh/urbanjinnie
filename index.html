@@ -2,32 +2,71 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Candy Surge 1000 — Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MEDBOT INVASION 1000 — Demo</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div id="app">
-    <!-- top bar -->
-    <header class="topbar">
-      <div class="brand"><span class="brand-mark">▰</span> DEMO CASINO</div>
-      <div class="topbar-right">
-        <div class="balance-pill">
-          <span class="balance-label">Balance</span>
-          <span id="balance">$0.00</span>
-          <button id="btnReset" class="icon-btn" title="Reset demo balance">↺</button>
-        </div>
-      </div>
-    </header>
+<div id="viewport">
+  <div id="stageWrap">
 
-    <!-- game card -->
-    <main class="game-card">
+    <!-- ===================== 1. LOBBY CARD ===================== -->
+    <section class="screen lobby active" data-screen="lobby">
+      <div class="lobby-bg"></div>
+      <div class="lobby-inner">
+        <div class="logo-block">
+          <div class="logo-medbot">MEDBOT</div>
+          <div class="logo-invasion">INVASION</div>
+          <div class="logo-1000">1000</div>
+          <div class="logo-tag">EMERGENCY LAB SPINS · UP TO 5000×</div>
+        </div>
+        <button id="lobbyPlay" class="btn-mega">▶ PLAY</button>
+        <div class="lobby-row">
+          <button id="lobbyInfo" class="btn-ghost">ⓘ How to play</button>
+          <button id="lobbyPaytable" class="btn-ghost">▦ Paytable</button>
+        </div>
+        <div class="lobby-foot"><span class="pub-chip">PUBLISHER LOGO</span> Demo build · No real money</div>
+      </div>
+    </section>
+
+    <!-- ===================== 3. LOADING SCREEN ===================== -->
+    <section class="screen loading" data-screen="loading">
+      <div class="logo-block small">
+        <div class="logo-medbot">MEDBOT</div>
+        <div class="logo-invasion">INVASION</div>
+        <div class="logo-1000">1000</div>
+      </div>
+      <div class="loadbar"><div id="loadFill" class="loadfill"></div></div>
+      <div id="loadPct" class="load-pct">Loading… 0%</div>
+    </section>
+
+    <!-- ===================== 4. MAIN GAME ===================== -->
+    <section class="screen game" data-screen="game">
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark">✚</span> MEDBOT INVASION 1000</div>
+        <div class="topbar-right">
+          <div class="balance-pill">
+            <span class="balance-label">Balance</span>
+            <span id="balance">$0.00</span>
+            <button id="btnReset" class="icon-btn" title="Reset demo balance">↺</button>
+          </div>
+          <button id="btnExit" class="icon-btn" title="Exit to lobby">⏻</button>
+        </div>
+      </header>
+
       <div class="game-shell">
-        <!-- bet panel -->
+        <section class="stage">
+          <canvas id="game"></canvas>
+          <div id="placeBets" class="place-bets">PLACE YOUR BETS</div>
+        </section>
+
         <aside class="panel">
-          <div class="tabs">
-            <button id="tabManual" class="tab active">Manual</button>
-            <button id="tabAuto" class="tab">Auto</button>
+          <div class="panel-head">
+            <div class="tabs">
+              <button id="tabManual" class="tab active">Manual</button>
+              <button id="tabAuto" class="tab">Auto</button>
+            </div>
           </div>
 
           <div class="field">
@@ -36,34 +75,27 @@
               <span class="muted">Cost <b id="betCost">$1.00</b></span>
             </div>
             <div class="bet-row">
-              <input id="betInput" type="number" step="0.01" min="0.10" max="100" value="1.00">
-              <button id="betHalf" class="mini-btn">½</button>
-              <button id="betDouble" class="mini-btn">2×</button>
+              <button id="betDown" class="mini-btn">−</button>
+              <input id="betInput" type="number" step="0.10" min="0.10" max="100" value="1.00">
+              <button id="betUp" class="mini-btn">+</button>
             </div>
             <div class="bet-row minmax">
               <button id="betMin" class="mini-btn wide">Min</button>
+              <button id="betHalf" class="mini-btn wide">½</button>
+              <button id="betDouble" class="mini-btn wide">2×</button>
               <button id="betMax" class="mini-btn wide">Max</button>
             </div>
           </div>
 
-          <div class="field">
-            <button id="anteToggle" class="ante">
-              <span class="ante-knob"></span>
-              <span class="ante-text"><b>Double Chance</b><small>×1.25 bet · 2× bonus chance</small></span>
-            </button>
-          </div>
-
-          <div class="field">
-            <button id="btnBuy" class="buy-btn">★ Bonus Buy</button>
-          </div>
+          <button id="btnBuy" class="buy-btn">⚡ BONUS BUY</button>
 
           <div id="manualPane">
-            <button id="btnSpin" class="spin-btn">Bet</button>
+            <button id="btnSpin" class="spin-btn">SPIN</button>
           </div>
 
           <div id="autoPane" style="display:none">
             <div class="field">
-              <div class="field-head"><label>Number of Bets</label></div>
+              <div class="field-head"><label>Number of Spins</label></div>
               <div class="auto-row">
                 <button class="mini-btn" data-auto="10">10</button>
                 <button class="mini-btn active" data-auto="25">25</button>
@@ -72,91 +104,171 @@
                 <button class="mini-btn" data-auto="inf">∞</button>
               </div>
             </div>
-            <button id="btnAutoStart" class="spin-btn">Start Autoplay</button>
+            <button id="btnAutoStart" class="spin-btn">START AUTOPLAY</button>
           </div>
 
           <div class="panel-foot">
             <div class="lastwin">Last win <b id="lastWin">—</b></div>
             <div class="icon-row">
-              <button id="btnTurbo" class="icon-btn" title="Turbo">⚡</button>
+              <button id="btnTurbo" class="icon-btn" title="Turbo spin">⚡</button>
               <button id="btnSound" class="icon-btn" title="Sound">🔊</button>
-              <button id="btnInfo" class="icon-btn" title="Paytable &amp; rules">ⓘ</button>
+              <button id="btnSettings" class="icon-btn" title="Settings">⚙</button>
+              <button id="btnHistory" class="icon-btn" title="Game history">≡</button>
+              <button id="btnInfo" class="icon-btn" title="Paytable & rules">ⓘ</button>
             </div>
           </div>
           <p id="statusLine" class="status">Loading…</p>
         </aside>
-
-        <!-- game stage -->
-        <section class="stage">
-          <canvas id="game"></canvas>
-        </section>
       </div>
 
-      <!-- game footer -->
       <footer class="game-footer">
         <div class="pub-logo" title="Publisher logo placeholder">PUBLISHER<br>LOGO</div>
         <div class="footer-mid">
-          <b>CANDY SURGE 1000</b>
-          <span>RTP 96.5% · Max win 25,000× · 7×7 Cluster Tumble</span>
+          <b>MEDBOT INVASION 1000</b>
+          <span>RTP 96.5% · Max win 5000× · 6×5 Pay-Anywhere Tumble</span>
         </div>
         <div class="footer-right">
           <span>Demo build · No real money</span>
           <span class="muted">Stake Engine-style math/playback separation</span>
         </div>
       </footer>
-    </main>
+    </section>
   </div>
 
-  <!-- bonus buy modal -->
-  <div id="buyModal" class="modal">
-    <div class="modal-card">
-      <div class="modal-head">
-        <h2>Bonus Buy</h2>
-        <button id="buyClose" class="icon-btn">✕</button>
+  <!-- ===================== OVERLAYS (modal screens) ===================== -->
+
+  <!-- 7. BONUS BUY MENU -->
+  <div id="buyMenu" class="overlay">
+    <div class="ov-card wide">
+      <div class="ov-head"><h2>⚡ BONUS BUY</h2><button class="ov-close" data-close="buyMenu">✕</button></div>
+      <div class="buy-grid">
+        <button class="buy-opt" data-buy="buy">
+          <div class="buy-ic ic-portal"></div>
+          <h3>BUY FREE SPINS</h3>
+          <p>10 Emergency Lab Spins. Collect Serum Multiplier Orbs.</p>
+          <div class="buy-cost" data-cost="buy">$100.00</div>
+          <div class="buy-x">100× bet</div>
+        </button>
+        <button class="buy-opt" data-buy="scanner">
+          <div class="buy-ic ic-scan"></div>
+          <h3>SCANNER MODE</h3>
+          <p>Extra Scanner Beams &amp; more Wild Med Kits.</p>
+          <div class="buy-cost" data-cost="scanner">$250.00</div>
+          <div class="buy-x">250× bet</div>
+        </button>
+        <button class="buy-opt" data-buy="outbreak">
+          <div class="buy-ic ic-germ"></div>
+          <h3>OUTBREAK MODE</h3>
+          <p>More Germ Explosions &amp; bigger Multipliers.</p>
+          <div class="buy-cost" data-cost="outbreak">$500.00</div>
+          <div class="buy-x">500× bet</div>
+        </button>
+        <button class="buy-opt gold" data-buy="virusking">
+          <div class="buy-ic ic-king"></div>
+          <h3>VIRUS KING MODE</h3>
+          <p>Highest chance of huge Virus King multipliers.</p>
+          <div class="buy-cost" data-cost="virusking">$1,000.00</div>
+          <div class="buy-x">1000× bet</div>
+        </button>
       </div>
-      <div class="buy-cards">
-        <div class="buy-card">
-          <h3>FREE SPINS</h3>
-          <p>Buy directly into <b>10+ Free Spins</b>. Multiplier spots stick for the whole bonus and double up to <b>×1024</b>.</p>
-          <div class="buy-price" id="buyCost">$100.00</div>
-          <div class="buy-mult">100× bet</div>
-          <button id="buyConfirm" class="spin-btn">Buy Free Spins</button>
-        </div>
-        <div class="buy-card super">
-          <h3>SUPER FREE SPINS</h3>
-          <p>Free Spins that start with <b>random multiplier spots pre-placed</b>, and every new spot lands as <b>×2 instantly</b>.</p>
-          <div class="buy-price" id="superBuyCost">$500.00</div>
-          <div class="buy-mult">500× bet</div>
-          <button id="superBuyConfirm" class="spin-btn gold">Buy Super Spins</button>
-        </div>
-      </div>
-      <p class="muted small">Bonus Buy is unavailable while Double Chance is active.</p>
+      <p class="muted small center">Bonus Buy instantly enters Emergency Lab Spins.</p>
     </div>
   </div>
 
-  <!-- info / paytable modal -->
-  <div id="infoModal" class="modal">
-    <div class="modal-card wide">
-      <div class="modal-head">
-        <h2>Game Info</h2>
-        <button id="infoClose" class="icon-btn">✕</button>
+  <!-- 8. CONFIRM PURCHASE -->
+  <div id="buyConfirm" class="overlay">
+    <div class="ov-card narrow">
+      <div class="ov-head"><h2 id="confirmTitle">BUY FREE SPINS</h2><button class="ov-close" data-close="buyConfirm">✕</button></div>
+      <p class="confirm-q">Are you sure you want to buy</p>
+      <p class="confirm-spins" id="confirmSpins">10 FREE SPINS</p>
+      <p class="confirm-sub" id="confirmSub">for 100× your current bet</p>
+      <div class="confirm-total">TOTAL COST: <b id="confirmCost">$100.00</b></div>
+      <div class="confirm-btns">
+        <button id="confirmNo" class="btn-no">NO</button>
+        <button id="confirmYes" class="btn-yes">YES</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 2/21. INFO + PAYTABLE -->
+  <div id="infoModal" class="overlay">
+    <div class="ov-card wide scroll">
+      <div class="ov-head"><h2>GAME INFO &amp; PAYTABLE</h2><button class="ov-close" data-close="infoModal">✕</button></div>
       <div class="info-scroll">
+        <div class="feature-cards" id="featureCards"></div>
         <h3>How to play</h3>
         <ul>
-          <li><b>7×7 grid, cluster pays:</b> land 5 or more matching symbols connected horizontally or vertically.</li>
-          <li><b>Tumble:</b> winning symbols pop, the rest fall down and new candies drop in. Tumbles continue while new wins form.</li>
-          <li><b>Multiplier spots:</b> every win leaves a mark on its cells. A second win on a marked cell turns it into a <b>×2</b> spot; each further win doubles it, up to <b>×1024</b>. A cluster's win is multiplied by the <b>sum</b> of spot values beneath it.</li>
-          <li><b>Free Spins:</b> 3, 4, 5, 6, 7 Crystal Cubes award 10, 12, 14, 16, 18 free spins. Marks and multiplier spots <b>persist for the entire bonus</b>. 3+ scatters during the bonus award +10 extra spins.</li>
-          <li><b>Double Chance:</b> pay ×1.25 per bet to double the chance of triggering free spins.</li>
-          <li><b>Bonus Buy / Super Bonus Buy:</b> buy free spins for 100× bet, or super free spins (pre-placed multipliers, spots start at ×2) for 500× bet.</li>
-          <li><b>Max win:</b> 25,000× bet. The round ends immediately when the cap is reached.</li>
+          <li><b>6×5 grid, pay anywhere:</b> land <b>8 or more</b> matching symbols anywhere on the grid to win — position doesn't matter.</li>
+          <li><b>Germ Explosion (tumble):</b> winning symbols explode, the rest fall and new symbols drop in. Tumbles continue while new wins form.</li>
+          <li><b>Wild Med Kit:</b> substitutes for every paying symbol.</li>
+          <li><b>Invasion Meter:</b> Germ Blob explosions charge the meter. A full meter fires the <b>Scanner Beam</b> — random symbols turn Wild.</li>
+          <li><b>Lab Portal (Scatter):</b> 3+ trigger <b>Emergency Lab Spins</b> (10/12/15/20). Portals also pay 3–100×.</li>
+          <li><b>Serum Multiplier Orbs:</b> in free spins, orbs are <b>collected into a total multiplier</b> (up to ×100) that multiplies every win.</li>
+          <li><b>Bonus Buy:</b> Free Spins 100× · Scanner 250× · Outbreak 500× · Virus King 1000×.</li>
+          <li><b>Max win:</b> 5000× bet — the round ends when the cap is reached.</li>
         </ul>
-        <h3>Paytable <span class="muted small">(× bet, by cluster size)</span></h3>
+        <h3>Paytable <span class="muted small">(× total bet, by count of symbols)</span></h3>
         <div id="paytableGrid"></div>
-        <h3>RTP</h3>
-        <p class="muted">Target RTP 96.5%. Bet modes: Base 96.5% · Double Chance 96.4% · Bonus Buy 96.4% · Super Bonus Buy 96.6% (simulated). Demo entertainment build — no real-money play.</p>
+        <h3>RTP &amp; volatility</h3>
+        <p class="muted">Target RTP 96.5% (base 96–97% simulated). High volatility. Bonus ~1 in 149 base spins. Demo entertainment build — no real-money play.</p>
       </div>
+    </div>
+  </div>
+
+  <!-- 23. SETTINGS -->
+  <div id="settingsModal" class="overlay">
+    <div class="ov-card narrow">
+      <div class="ov-head"><h2>⚙ SETTINGS</h2><button class="ov-close" data-close="settingsModal">✕</button></div>
+      <div class="set-row"><span>Sound FX</span><button class="toggle on" data-set="sound"><span></span></button></div>
+      <div class="set-row"><span>Music</span><button class="toggle on" data-set="music"><span></span></button></div>
+      <div class="set-row"><span>Turbo Spin</span><button class="toggle" data-set="turbo"><span></span></button></div>
+      <div class="set-row"><span>Quick Spin</span><button class="toggle" data-set="quick"><span></span></button></div>
+      <div class="set-row"><span>Language</span>
+        <select id="langSelect"><option>English</option><option>Español</option><option>Português</option><option>Français</option><option>Deutsch</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 24. GAME HISTORY -->
+  <div id="historyModal" class="overlay">
+    <div class="ov-card wide">
+      <div class="ov-head"><h2>≡ GAME HISTORY</h2><button class="ov-close" data-close="historyModal">✕</button></div>
+      <table class="hist-table">
+        <thead><tr><th>Time</th><th>Bet</th><th>Win</th><th>Feature</th></tr></thead>
+        <tbody id="histBody"><tr><td colspan="4" class="muted center">No rounds yet — spin to play.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 25. EXIT CONFIRMATION -->
+  <div id="exitModal" class="overlay">
+    <div class="ov-card narrow">
+      <div class="ov-head"><h2>EXIT GAME</h2><button class="ov-close" data-close="exitModal">✕</button></div>
+      <p class="confirm-q big">Are you sure you want to exit the game?</p>
+      <p class="confirm-sub">You will return to the lobby.</p>
+      <div class="confirm-btns">
+        <button id="exitNo" class="btn-no">NO</button>
+        <button id="exitYes" class="btn-yes">YES</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 26. THANKS / BACK TO LOBBY -->
+  <div id="thanksModal" class="overlay">
+    <div class="ov-card narrow thanks">
+      <div class="thanks-art"></div>
+      <h2>THANKS FOR PLAYING!</h2>
+      <p class="confirm-sub">Tap to return to lobby.</p>
+      <button id="thanksBack" class="btn-mega small">↩ BACK TO LOBBY</button>
+    </div>
+  </div>
+
+  <!-- ===================== CELEBRATORY BANNERS ===================== -->
+  <div id="banner" class="banner">
+    <div class="banner-inner">
+      <div id="bannerTitle" class="banner-title">BIG WIN</div>
+      <div id="bannerAmt" class="banner-amt">$0.00</div>
+      <div id="bannerSub" class="banner-sub"></div>
     </div>
   </div>
 
@@ -165,7 +277,9 @@
   <script src="js/symbols.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/renderer.js"></script>
+  <script src="js/screens.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/main.js"></script>
+</div>
 </body>
 </html>

@@ -1,5 +1,5 @@
 /* =========================================================================
- * CANDY SURGE 1000 — Audio (WebAudio synthesis, no audio assets)
+ * MEDBOT INVASION 1000 — Audio (WebAudio synthesis, no audio assets)
  * ========================================================================= */
 (function (g) {
   'use strict';
@@ -109,6 +109,12 @@
   };
 
   P.tick = function () { this.tone({ type: 'square', freq: 1500, dur: 0.03, vol: 0.05 }); };
+
+  P.scanner = function () {
+    this.noise({ freq: 400, slide: 5000, dur: 0.5, vol: 0.16, filter: 'bandpass' });
+    this.tone({ type: 'sawtooth', freq: 220, slide: 1800, dur: 0.5, vol: 0.12 });
+    this.tone({ type: 'sine', freq: 1800, slide: 600, dur: 0.4, vol: 0.1, delay: 0.1 });
+  };
 
   P.maxWin = function () {
     for (var i = 0; i < 10; i++)

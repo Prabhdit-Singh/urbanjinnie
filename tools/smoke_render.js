@@ -58,22 +58,33 @@ var renderer = new globalThis.Renderer(document.getElementById('game'), sfx);
 // Make all animation primitives instant so books replay fast
 renderer.wait = function () { return Promise.resolve(); };
 renderer.tween = function (obj, prop, to) { obj[prop] = to; return Promise.resolve(); };
-renderer.bigWinSplash = function () { return Promise.resolve(); };
 
-var modes = ['base', 'base', 'ante', 'buy', 'superbuy'];
+// stub the celebratory screen hooks (resolve instantly)
+var noopHooks = {
+  scatterTrigger: function () { return Promise.resolve(); },
+  fsStart: function () { return Promise.resolve(); },
+  feature: function () { return Promise.resolve(); },
+  fsComplete: function () { return Promise.resolve(); },
+  winTier: function () { return Promise.resolve(); },
+  maxWin: function () { return Promise.resolve(); }
+};
+
+var modes = ['base', 'base', 'buy', 'scanner', 'outbreak', 'virusking'];
 
 (async function () {
-  var played = 0, withFs = 0;
-  for (var i = 0; i < 400; i++) {
+  var played = 0, withFs = 0, withScan = 0;
+  for (var i = 0; i < 500; i++) {
     var mode = modes[i % modes.length];
     var book = engine.playRound(mode);
     if (book.events.some(function (e) { return e.type === 'fsTrigger'; })) withFs++;
-    await renderer.playBook(book, { bet: 1, turbo: true, onWin: function () {} });
+    if (book.events.some(function (e) { return e.type === 'scannerBeam'; })) withScan++;
+    await renderer.playBook(book, { bet: 1, turbo: true, hooks: noopHooks, onWin: function () {} });
     played++;
   }
   // let a few draw frames run with live state
   await new Promise(function (r) { setTimeout(r, 120); });
-  console.log('Replayed %d books (%d with free spins) through the renderer — no errors.', played, withFs);
+  console.log('Replayed %d books (%d with free spins, %d with scanner beam) through the renderer — no errors.',
+    played, withFs, withScan);
   process.exit(0);
 })().catch(function (err) {
   console.error('SMOKE TEST FAILED:', err);

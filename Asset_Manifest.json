@@ -1,0 +1,32 @@
+{
+  "game": "MEDBOT INVASION 1000",
+  "gameId": "medbot_invasion_1000",
+  "grid": { "cols": 6, "rows": 5 },
+  "symbolArt": {
+    "dir": "assets/symbols/",
+    "policy": "Exact PNG used verbatim when present; procedural fallback otherwise. No SVG.",
+    "recommended": { "size": "512x512", "format": "png", "background": "transparent" },
+    "files": {
+      "dr_nova": "dr_nova.png",
+      "nurse_bot": "nurse_bot.png",
+      "virus_king": "virus_king.png",
+      "germ_blob": "germ_blob.png",
+      "med_drone": "med_drone.png",
+      "serum_vial": "serum_vial.png",
+      "bio_capsule": "bio_capsule.png",
+      "lab_crystal": "lab_crystal.png",
+      "ace": "ace.png",
+      "king": "king.png",
+      "queen": "queen.png",
+      "jack": "jack.png",
+      "ten": "ten.png",
+      "wild": "wild_med_kit.png",
+      "scatter": "lab_portal.png",
+      "orb": "serum_multiplier_orb.png"
+    },
+    "notes": [
+      "orb multiplier value (x2..x100) is rendered dynamically over the orb art; provide art without a baked number"
+    ]
+  },
+  "status": "awaiting individual symbol PNGs from the package"
+}

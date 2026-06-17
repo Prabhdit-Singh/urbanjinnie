@@ -1,8 +1,8 @@
 /* =========================================================================
- * RTP / volatility simulator — Stake Engine math-sdk style verification.
- *
- * Runs the exact same engine code the browser uses and reports, per bet
- * mode: RTP, hit rate, bonus frequency, max-win hits and win distribution.
+ * MEDBOT INVASION 1000 — RTP / volatility simulator (Stake Engine math-sdk
+ * style verification). Runs the exact same engine the browser uses and
+ * reports per bet mode: RTP, hit rate, bonus frequency, max-win hits and the
+ * win distribution.
  *
  * Usage: node tools/simulate.js [rounds] [seed]
  * ========================================================================= */
@@ -14,7 +14,7 @@ require('../js/engine.js');
 var CFG = globalThis.GameConfig;
 var Engine = globalThis.GameEngine;
 
-var rounds = parseInt(process.argv[2], 10) || 100000;
+var rounds = parseInt(process.argv[2], 10) || 200000;
 var seed = parseInt(process.argv[3], 10) || 12345;
 
 function simulate(mode, n, seedOffset) {
@@ -47,13 +47,14 @@ function simulate(mode, n, seedOffset) {
   console.log('RTP:        %s%%', (100 * totalWin / totalCost).toFixed(2));
   console.log('Hit rate:   %s%%', (100 * hits / n).toFixed(2));
   console.log('Bonus freq: 1 in %s', bonuses ? (n / bonuses).toFixed(1) : 'n/a');
-  console.log('Best win:   %sx bet (cap %sx)  | cap hits: %d', best.toFixed(0), CFG.maxWinX, maxWins);
-  console.log('Distribution (x of total cost):', JSON.stringify(buckets));
+  console.log('Best win:   %sx bet (cap %sx) | cap hits: %d', best.toFixed(0), CFG.maxWinX, maxWins);
+  console.log('Distribution:', JSON.stringify(buckets));
   console.log('');
 }
 
-console.log('CANDY SURGE 1000 math verification — target RTP %s%%\n', (CFG.rtp * 100).toFixed(1));
+console.log('MEDBOT INVASION 1000 math verification — target RTP %s%%\n', (CFG.rtp * 100).toFixed(1));
 simulate('base', rounds, 0);
-simulate('ante', Math.floor(rounds / 2), 1);
-simulate('buy', Math.floor(rounds / 20), 2);
-simulate('superbuy', Math.floor(rounds / 20), 3);
+simulate('buy', Math.max(2000, Math.floor(rounds / 20)), 2);
+simulate('scanner', Math.max(2000, Math.floor(rounds / 20)), 3);
+simulate('outbreak', Math.max(2000, Math.floor(rounds / 20)), 4);
+simulate('virusking', Math.max(2000, Math.floor(rounds / 20)), 5);

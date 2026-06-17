@@ -1,10 +1,15 @@
 /* =========================================================================
- * CANDY SURGE 1000 — Renderer
+ * MEDBOT INVASION 1000 — Renderer
  *
  * Pure playback layer: receives event "books" from the engine and animates
- * them on a single canvas. Never computes game outcomes (Stake Engine
- * web-sdk role). Candy-land scene, tumble physics, multiplier badges,
- * free-spins HUD, win splashes and particles are all drawn here.
+ * them on a single canvas (Stake Engine web-sdk role). Never computes
+ * outcomes. Draws the neon lab scene, the 6x5 grid, pay-anywhere wins, germ
+ * explosions / tumbles, Serum Multiplier Orbs, the Scanner Beam, the
+ * Invasion Meter and the Emergency Lab Spins HUD.
+ *
+ * Celebratory full-screen moments (Scatter Trigger, Free Spins start, Nice/
+ * Big/Mega win, bonus complete) are delegated to DOM overlays via hooks so
+ * they render crisply and match the master sheet screens.
  * ========================================================================= */
 (function (g) {
   'use strict';
@@ -14,7 +19,7 @@
 
   var EASE = {
     outCubic: function (t) { return 1 - Math.pow(1 - t, 3); },
-    outBack: function (t) { var s = 1.4; t -= 1; return t * t * ((s + 1) * t + s) + 1; },
+    outBack: function (t) { var s = 1.5; t -= 1; return t * t * ((s + 1) * t + s) + 1; },
     outBounce: function (t) {
       var n1 = 7.5625, d1 = 2.75;
       if (t < 1 / d1) return n1 * t * t;
@@ -32,25 +37,26 @@
     this.cols = CFG.grid.cols;
     this.rows = CFG.grid.rows;
 
-    this.cells = [];          // [c][r] -> {sym, dy, scale, alpha, glow} | null
-    this.spots = [];          // [{c,r,hits,value}]
+    this.cells = [];          // [c][r] -> {sym, mult, dy, scale, alpha, glow} | null
     this.particles = [];
-    this.floaters = [];       // floating pay texts
-    this.banner = null;       // transient center banner
-    this.fsHud = null;        // {index,total,win}
-    this.winBar = null;       // {amount, tumbles}
-    this.anticipate = false;
+    this.floaters = [];
+    this.beams = [];          // scanner beam segments
+    this.fsHud = null;        // {index,total}
+    this.fsMult = 0;          // collected serum multiplier (FS)
+    this.meter = 0;           // invasion meter 0..capacity
+    this.winBar = null;       // {amount}
     this.speed = 1;
     this.bet = 1;
     this.currency = '$';
     this.time = 0;
     this.skipRequested = false;
 
-    this.bokeh = [];
-    for (var i = 0; i < 26; i++) {
-      this.bokeh.push({ x: Math.random(), y: Math.random(), r: 0.02 + Math.random() * 0.05,
-                        sp: 0.2 + Math.random() * 0.5, ph: Math.random() * Math.PI * 2,
-                        hue: [305, 270, 195, 45][i % 4] });
+    // ambient lab particles (drifting spores)
+    this.spores = [];
+    for (var i = 0; i < 36; i++) {
+      this.spores.push({ x: Math.random(), y: Math.random(), r: 0.004 + Math.random() * 0.01,
+        sp: 0.1 + Math.random() * 0.4, ph: Math.random() * 7,
+        hue: [150, 190, 280, 110][i % 4] });
     }
 
     this.initIdleGrid();
@@ -60,28 +66,33 @@
     window.addEventListener('resize', function () { self.resize(); });
     canvas.addEventListener('pointerdown', function () { self.skipRequested = true; });
 
-    var loop = function (t) {
+    (function loop(t) {
       self.time = t / 1000;
       self.draw();
       requestAnimationFrame(loop);
-    };
-    requestAnimationFrame(loop);
+    })(0);
   }
 
   var P = Renderer.prototype;
 
+  P.payingIds = function () {
+    return CFG.symbols.map(function (s) { return s.id; });
+  };
+
   P.initIdleGrid = function () {
-    var ids = CFG.symbols.map(function (s) { return s.id; });
+    var ids = this.payingIds();
     for (var c = 0; c < this.cols; c++) {
       this.cells[c] = [];
       for (var r = 0; r < this.rows; r++)
-        this.cells[c][r] = this.mkCell(ids[(Math.random() * ids.length) | 0]);
+        this.cells[c][r] = this.mkCell({ sym: ids[(Math.random() * ids.length) | 0] });
     }
   };
 
-  P.mkCell = function (sym) { return { sym: sym, dy: 0, scale: 1, alpha: 1, glow: 0 }; };
+  P.mkCell = function (data) {
+    return { sym: data.sym, mult: data.mult, dy: 0, scale: 1, alpha: 1, glow: 0 };
+  };
 
-  /* ---- layout ----------------------------------------------------------- */
+  /* ---- layout ---------------------------------------------------------- */
   P.resize = function () {
     var rect = this.canvas.parentElement.getBoundingClientRect();
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -93,22 +104,22 @@
     this.canvas.style.height = this.h + 'px';
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    var headerH = Math.max(54, this.h * 0.12);
-    var footerH = Math.max(40, this.h * 0.1);
-    var availH = this.h - headerH - footerH - 16;
-    var availW = this.w - 24;
+    var headerH = Math.max(48, this.h * 0.13);
+    var footerH = Math.max(36, this.h * 0.09);
+    var availH = this.h - headerH - footerH - 12;
+    var availW = this.w - 28;
     this.cell = Math.floor(Math.min(availW / this.cols, availH / this.rows));
     this.boardW = this.cell * this.cols;
     this.boardH = this.cell * this.rows;
     this.boardX = (this.w - this.boardW) / 2;
-    this.boardY = headerH + (availH - this.boardH) / 2 + 8;
+    this.boardY = headerH + (availH - this.boardH) / 2 + 6;
   };
 
   P.cellXY = function (c, r) {
     return { x: this.boardX + c * this.cell, y: this.boardY + r * this.cell };
   };
 
-  /* ---- timing helpers ---------------------------------------------------- */
+  /* ---- timing helpers -------------------------------------------------- */
   P.wait = function (ms) {
     var self = this;
     return new Promise(function (res) { setTimeout(res, ms / self.speed); });
@@ -118,12 +129,11 @@
     var self = this, from = obj[prop], t0 = performance.now(), dur = ms / self.speed;
     ease = ease || EASE.outCubic;
     return new Promise(function (res) {
-      function step(t) {
+      (function step(t) {
         var k = Math.min(1, (t - t0) / dur);
         obj[prop] = from + (to - from) * ease(k);
         if (k < 1) requestAnimationFrame(step); else res();
-      }
-      requestAnimationFrame(step);
+      })(performance.now());
     });
   };
 
@@ -138,98 +148,112 @@
   P.playBook = function (book, opts) {
     var self = this;
     this.bet = opts.bet;
-    this.speed = opts.turbo ? 2.4 : 1;
+    this.currency = opts.currency || '$';
+    this.speed = opts.turbo ? 2.6 : 1;
     this.skipRequested = false;
+    var hooks = opts.hooks || {};
     var onWin = opts.onWin || function () {};
+    function hook(name) {
+      var fn = hooks[name];
+      return fn ? (fn.apply(null, Array.prototype.slice.call(arguments, 1)) || Promise.resolve())
+                : Promise.resolve();
+    }
 
     return (async function () {
-      var inFs = false, fsWinSoFar = 0, spinWinBase = 0;
+      var inFs = false, fsWinSoFar = 0;
+      self.meter = 0; self.fsMult = 0; self.winBar = null;
 
       for (var i = 0; i < book.events.length; i++) {
         var ev = book.events[i];
         switch (ev.type) {
           case 'reveal':
-            self.spots = ev.spots;
+            self.fsMult = ev.fsMult || (inFs ? self.fsMult : 0);
             await self.animReveal(ev.grid);
             break;
 
           case 'win':
             await self.animWin(ev);
-            var totalNow = inFs ? fsWinSoFar + ev.spinWin : ev.spinWin;
-            self.winBar = { amount: totalNow, tumbles: ev.tumbleIndex + 1 };
-            if (self.fsHud) self.fsHud.win = fsWinSoFar + ev.spinWin;
-            spinWinBase = ev.spinWin;
-            onWin(totalNow);
+            var shown = inFs ? fsWinSoFar + ev.spinWin : ev.spinWin;
+            self.winBar = { amount: shown };
+            onWin(shown);
             break;
 
           case 'tumble':
             await self.animTumble(ev.grid);
-            self.spots = ev.spots;
+            break;
+
+          case 'orbCollect':
+            await self.animOrbCollect(ev);
+            self.fsMult = ev.fsMult;
+            break;
+
+          case 'meter':
+            self.meter = ev.value;
+            await self.wait(150);
+            break;
+
+          case 'scannerBeam':
+            await hook('feature', 'scanner');
+            await self.animScannerBeam(ev);
             break;
 
           case 'scatterPay':
             self.sfx.scatter();
-            self.floatText('SCATTER PAYS ' + self.fmt(ev.pay), self.w / 2, self.boardY - 14, '#ffd24a');
-            await self.wait(700);
+            self.floatText('LAB PORTAL PAYS ' + self.fmt(ev.pay), self.w / 2, self.boardY - 12, '#19d3ff');
+            await self.wait(650);
             break;
 
           case 'fsTrigger':
             self.sfx.bonus();
-            await self.splash('FREE SPINS!', ev.spins + ' FREE SPINS — MULTIPLIER SPOTS STICK', 2200, '#ff7ad9');
-            inFs = true;
-            fsWinSoFar = 0;
-            self.fsHud = { index: 0, total: ev.spins, win: 0 };
+            await hook('scatterTrigger', ev.count, ev.spins);
+            await hook('fsStart', ev.spins, ev.mode);
+            inFs = true; fsWinSoFar = 0; self.fsMult = 0;
+            self.fsHud = { index: 0, total: ev.spins };
             break;
 
           case 'fsSpin':
             self.fsHud.index = ev.index;
             self.fsHud.total = ev.total;
-            fsWinSoFar = self.fsHud.win;
-            spinWinBase = 0;
+            fsWinSoFar = self._fsAccum || 0;
             self.winBar = null;
-            await self.wait(350);
+            await self.wait(280);
             break;
 
           case 'fsRetrigger':
             self.sfx.bonus();
             self.fsHud.total = ev.total;
-            self.floatText('+' + ev.extraSpins + ' FREE SPINS!', self.w / 2, self.boardY - 14, '#5ee06a');
-            await self.wait(900);
-            break;
-
-          case 'seedSpots':
-            self.spots = ev.spots;
-            self.sfx.multiplier();
-            self.floatText('SUPER MULTIPLIERS PLACED!', self.w / 2, self.boardY - 14, '#ffd24a');
-            await self.wait(900);
+            self.floatText('+' + ev.extraSpins + ' FREE SPINS!', self.w / 2, self.boardY - 12, '#8aff3a');
+            await self.wait(800);
             break;
 
           case 'fsEnd':
-            await self.wait(300);
-            await self.splash('BONUS COMPLETE', 'TOTAL WIN ' + self.fmt(ev.totalWin), 2200, '#ffd24a');
-            self.fsHud = null;
-            inFs = false;
+            self._fsAccum = 0;
+            await self.wait(250);
+            await hook('fsComplete', ev.totalWin, ev.spinsPlayed);
+            self.fsHud = null; inFs = false; self.fsMult = 0;
             break;
 
           case 'maxWin':
             self.sfx.maxWin();
-            await self.splash('MAX WIN!', CFG.maxWinX.toLocaleString() + '× — ' + self.fmt(ev.totalWin), 3000, '#ff4d6d');
+            await hook('maxWin', ev.totalWin);
             break;
 
           case 'roundEnd':
             if (ev.totalWin > 0) {
-              self.winBar = { amount: ev.totalWin, tumbles: 0 };
+              self.winBar = { amount: ev.totalWin };
               onWin(ev.totalWin);
-              var x = ev.totalWin; // in bet multiples
-              if (x >= 20 && x < CFG.maxWinX) await self.bigWinSplash(x);
+              await hook('winTier', ev.totalWin);
             }
             break;
         }
+        // track FS running total across spins
+        if (ev.type === 'win' && inFs) self._fsAccum = fsWinSoFar + ev.spinWin;
       }
+      self.meter = 0;
     })();
   };
 
-  /* ---- reveal: columns drop in ------------------------------------------ */
+  /* ---- reveal ---------------------------------------------------------- */
   P.animReveal = function (grid) {
     var self = this;
     this.winBar = null;
@@ -240,13 +264,13 @@
         var cell = this.mkCell(grid[c][r]);
         cell.dy = -(this.rows - r + 2) * this.cell - this.boardY;
         this.cells[c][r] = cell;
-        var delay = c * 40 + (this.rows - r) * 18;
-        jobs.push(this.dropCell(cell, delay, 430));
-        if (grid[c][r] === 'scatter') {
-          (function (cc) { setTimeout(function () { self.sfx.scatter(); }, (cc * 40 + 360) / self.speed); })(c);
+        var delay = c * 55 + (this.rows - r) * 16;
+        jobs.push(this.dropCell(cell, delay, 420));
+        if (grid[c][r].sym === 'scatter') {
+          (function (cc) { setTimeout(function () { self.sfx.scatter(); }, (cc * 55 + 360) / self.speed); })(c);
         }
       }
-      (function (cc) { setTimeout(function () { self.sfx.land(cc); }, (cc * 40 + 320) / self.speed); })(c);
+      (function (cc) { setTimeout(function () { self.sfx.land(cc); }, (cc * 55 + 300) / self.speed); })(c);
     }
     return Promise.all(jobs);
   };
@@ -258,63 +282,60 @@
     });
   };
 
-  /* ---- win: highlight clusters, pay, explode ----------------------------- */
+  /* ---- win: highlight + pay + germ explosion --------------------------- */
   P.animWin = function (ev) {
     var self = this;
     return (async function () {
-      var k, i, cl;
-      // highlight
-      for (k = 0; k < ev.clusters.length; k++) {
-        cl = ev.clusters[k];
-        for (i = 0; i < cl.cells.length; i++) {
-          var cc = self.cells[cl.cells[i][0]][cl.cells[i][1]];
+      var k, i, win;
+      for (k = 0; k < ev.wins.length; k++) {
+        win = ev.wins[k];
+        for (i = 0; i < win.cells.length; i++) {
+          var cc = self.cells[win.cells[i][0]][win.cells[i][1]];
           if (cc) cc.glow = 1;
         }
       }
       self.sfx.winChime(ev.tumbleIndex);
-      await self.wait(120);
+      await self.wait(110);
 
-      // floating pay text per cluster
-      for (k = 0; k < ev.clusters.length; k++) {
-        cl = ev.clusters[k];
+      for (k = 0; k < ev.wins.length; k++) {
+        win = ev.wins[k];
         var cx = 0, cy = 0;
-        for (i = 0; i < cl.cells.length; i++) {
-          var p = self.cellXY(cl.cells[i][0], cl.cells[i][1]);
+        for (i = 0; i < win.cells.length; i++) {
+          var p = self.cellXY(win.cells[i][0], win.cells[i][1]);
           cx += p.x + self.cell / 2; cy += p.y + self.cell / 2;
         }
-        cx /= cl.cells.length; cy /= cl.cells.length;
-        var label = self.fmt(cl.pay) + (cl.multSum > 0 ? '  (x' + cl.multSum + ')' : '');
-        self.floatText(label, cx, cy, cl.multSum > 0 ? '#ffd24a' : '#ffffff');
-        if (cl.multSum > 0) self.sfx.multiplier();
+        cx /= win.cells.length; cy /= win.cells.length;
+        self.floatText(self.fmt(win.pay), cx, cy, '#ffffff');
       }
-      await self.wait(460);
+      if (ev.mult > 1) {
+        self.sfx.multiplier();
+        self.floatText('TOTAL ×' + ev.mult, self.w / 2, self.boardY + self.boardH + 8, '#c264ff');
+      }
+      await self.wait(420);
 
-      // explode
       self.sfx.pop(ev.tumbleIndex);
       var jobs = [];
-      for (k = 0; k < ev.clusters.length; k++) {
-        cl = ev.clusters[k];
-        for (i = 0; i < cl.cells.length; i++) {
-          var c0 = cl.cells[i][0], r0 = cl.cells[i][1];
+      for (k = 0; k < ev.wins.length; k++) {
+        win = ev.wins[k];
+        for (i = 0; i < win.cells.length; i++) {
+          var c0 = win.cells[i][0], r0 = win.cells[i][1];
           var cell = self.cells[c0][r0];
           if (!cell) continue;
           self.burst(c0, r0, cell.sym);
-          jobs.push(self.tween(cell, 'scale', 0, 200, EASE.inCubic));
+          jobs.push(self.tween(cell, 'scale', 0, 190, EASE.inCubic));
         }
       }
       await Promise.all(jobs);
-      for (k = 0; k < ev.clusters.length; k++) {
-        cl = ev.clusters[k];
-        for (i = 0; i < cl.cells.length; i++)
-          self.cells[cl.cells[i][0]][cl.cells[i][1]] = null;
+      for (k = 0; k < ev.wins.length; k++) {
+        win = ev.wins[k];
+        for (i = 0; i < win.cells.length; i++)
+          self.cells[win.cells[i][0]][win.cells[i][1]] = null;
       }
-      // updated multiplier spots appear right after the explosion
-      self.spots = ev.spots;
-      await self.wait(120);
+      await self.wait(90);
     })();
   };
 
-  /* ---- tumble: settle survivors, drop refills ----------------------------- */
+  /* ---- tumble ---------------------------------------------------------- */
   P.animTumble = function (newGrid) {
     var self = this;
     var jobs = [];
@@ -330,21 +351,16 @@
       }
       for (var kp = 0; kp < kept.length; kp++) {
         var target = newCount + kp;
-        // dy measured against the new row position
         var oldRow = this.findRowOf(c, kept[kp]);
         kept[kp].dy = (oldRow - target) * this.cell;
         col.push(kept[kp]);
       }
       for (var r2 = 0; r2 < this.rows; r2++) {
         this.cells[c][r2] = col[r2];
-        if (col[r2].dy !== 0)
-          jobs.push(this.dropCell(col[r2], c * 18, 380));
-        if (col[r2].sym === 'scatter' && r2 < newCount) {
-          (function () { setTimeout(function () { self.sfx.scatter(); }, 320 / self.speed); })();
-        }
+        if (col[r2].dy !== 0) jobs.push(this.dropCell(col[r2], c * 16, 360));
       }
     }
-    return Promise.all(jobs).then(function () { return self.wait(90); });
+    return Promise.all(jobs).then(function () { return self.wait(80); });
   };
 
   P.findRowOf = function (c, cell) {
@@ -352,66 +368,62 @@
     return 0;
   };
 
-  /* ---- particles & texts -------------------------------------------------- */
+  /* ---- orb collection (free spins) ------------------------------------- */
+  P.animOrbCollect = function (ev) {
+    var self = this;
+    return (async function () {
+      self.sfx.multiplier();
+      var hudX = self.w / 2, hudY = self.boardY - Math.max(28, self.cell * 0.5);
+      for (var i = 0; i < ev.orbs.length; i++) {
+        var o = ev.orbs[i];
+        var p = self.cellXY(o.c, o.r);
+        self.floatText('+×' + o.mult, p.x + self.cell / 2, p.y + self.cell / 2, '#c264ff');
+        for (var n = 0; n < 10; n++) {
+          var a = Math.random() * Math.PI * 2, sp = (0.3 + Math.random()) * self.cell * 4;
+          self.particles.push({ x: p.x + self.cell / 2, y: p.y + self.cell / 2,
+            vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 2 + Math.random() * 4,
+            color: '#c264ff', life: 1, decay: 1.6 });
+        }
+      }
+      await self.wait(550);
+    })();
+  };
+
+  /* ---- scanner beam feature -------------------------------------------- */
+  P.animScannerBeam = function (ev) {
+    var self = this;
+    return (async function () {
+      // ensure board shows the scanner grid
+      for (var c = 0; c < self.cols; c++)
+        for (var r = 0; r < self.rows; r++)
+          self.cells[c][r] = self.mkCell(ev.grid[c][r]);
+      self.sfx.scanner();
+      // sweep beams to each wild
+      for (var i = 0; i < ev.wilds.length; i++) {
+        var p = self.cellXY(ev.wilds[i][0], ev.wilds[i][1]);
+        self.beams.push({ x: p.x + self.cell / 2, y: p.y + self.cell / 2, born: self.time, life: 0.9 });
+        var cell = self.cells[ev.wilds[i][0]][ev.wilds[i][1]];
+        if (cell) cell.glow = 1;
+      }
+      await self.wait(900);
+    })();
+  };
+
+  /* ---- particles & texts ----------------------------------------------- */
   P.burst = function (c, r, sym) {
-    var p = this.cellXY(c, r), color = '#fff';
-    for (var i = 0; i < CFG.symbols.length; i++)
-      if (CFG.symbols[i].id === sym) color = CFG.symbols[i].color;
-    if (sym === 'scatter') color = '#ffd24a';
-    for (var n = 0; n < 14; n++) {
+    var p = this.cellXY(c, r), s = CFG.symbolById(sym), color = s ? s.color : '#fff';
+    if (sym === 'scatter') color = '#19d3ff';
+    if (sym === 'wild') color = '#ff6d86';
+    for (var n = 0; n < 16; n++) {
       var a = Math.random() * Math.PI * 2, sp = (0.4 + Math.random()) * this.cell * 5;
-      this.particles.push({
-        x: p.x + this.cell / 2, y: p.y + this.cell / 2,
+      this.particles.push({ x: p.x + this.cell / 2, y: p.y + this.cell / 2,
         vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - this.cell * 2,
-        r: 2 + Math.random() * (this.cell * 0.09),
-        color: color, life: 1, decay: 1.6 + Math.random()
-      });
+        r: 2 + Math.random() * (this.cell * 0.09), color: color, life: 1, decay: 1.6 + Math.random() });
     }
   };
 
   P.floatText = function (text, x, y, color) {
-    this.floaters.push({ text: text, x: x, y: y, color: color || '#fff', life: 1.6 });
-  };
-
-  /* ---- splashes ------------------------------------------------------------ */
-  P.splash = function (title, sub, ms, color) {
-    var self = this;
-    this.banner = { title: title, sub: sub, color: color, born: this.time };
-    for (var n = 0; n < 50; n++) {
-      this.particles.push({
-        x: this.w / 2 + (Math.random() - 0.5) * this.w * 0.4,
-        y: this.h / 2 + (Math.random() - 0.5) * this.h * 0.2,
-        vx: (Math.random() - 0.5) * 500, vy: -200 - Math.random() * 400,
-        r: 3 + Math.random() * 5,
-        color: ['#ff7ad9', '#ffd24a', '#5ee06a', '#4fc3ff'][n % 4],
-        life: 1.4, decay: 0.8
-      });
-    }
-    return this.wait(ms).then(function () { self.banner = null; });
-  };
-
-  P.bigWinSplash = function (x) {
-    var self = this;
-    var tier = x >= 500 ? 'EPIC WIN' : x >= 100 ? 'MEGA WIN' : x >= 40 ? 'SUPER WIN' : 'BIG WIN';
-    self.sfx.bigWin();
-    self.skipRequested = false;
-    var counter = { v: 0 };
-    self.banner = { title: tier, sub: self.fmt(0), color: '#ffd24a', born: self.time, counter: true };
-    var dur = Math.min(2600, 900 + x * 8);
-    var t0 = performance.now();
-    return new Promise(function (res) {
-      var lastTick = 0;
-      function step(t) {
-        var k = Math.min(1, (t - t0) / (dur / self.speed));
-        if (self.skipRequested) k = 1;
-        counter.v = x * EASE.outCubic(k);
-        if (self.banner) self.banner.sub = self.fmt(counter.v);
-        if (t - lastTick > 60) { self.sfx.tick(); lastTick = t; }
-        if (k < 1) requestAnimationFrame(step);
-        else setTimeout(function () { self.banner = null; res(); }, 700 / self.speed);
-      }
-      requestAnimationFrame(step);
-    });
+    this.floaters.push({ text: text, x: x, y: y, color: color || '#fff', life: 1.5 });
   };
 
   /* ======================================================================
@@ -421,63 +433,73 @@
     var ctx = this.ctx, w = this.w, h = this.h, t = this.time;
     var dt = Math.min(0.05, t - (this.lastT || t)); this.lastT = t;
 
-    /* background: candy dusk sky */
+    // background: dark lab
     var sky = ctx.createLinearGradient(0, 0, 0, h);
-    sky.addColorStop(0, '#2b1055');
-    sky.addColorStop(0.55, '#5b2a86');
-    sky.addColorStop(1, '#b0447c');
+    sky.addColorStop(0, '#0a1226');
+    sky.addColorStop(0.55, '#0c1838');
+    sky.addColorStop(1, '#0a0f22');
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, w, h);
 
-    // bokeh sparkles
-    for (var i = 0; i < this.bokeh.length; i++) {
-      var b = this.bokeh[i];
-      var bx = b.x * w, by = (b.y + Math.sin(t * b.sp + b.ph) * 0.02) * h;
-      var br = b.r * Math.min(w, h) * (1 + 0.15 * Math.sin(t * 1.3 + b.ph));
-      ctx.fillStyle = 'hsla(' + b.hue + ',90%,75%,0.10)';
+    this.drawLabBackdrop(ctx);
+
+    // drifting spores
+    for (var i = 0; i < this.spores.length; i++) {
+      var b = this.spores[i];
+      var bx = b.x * w, by = (b.y + Math.sin(t * b.sp + b.ph) * 0.04) * h;
+      var br = b.r * Math.min(w, h) * (1 + 0.2 * Math.sin(t * 1.4 + b.ph));
+      ctx.fillStyle = 'hsla(' + b.hue + ',90%,65%,0.10)';
       ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2); ctx.fill();
     }
 
-    // rolling candy hills at the bottom
-    ctx.fillStyle = 'rgba(255,122,217,0.18)';
-    ctx.beginPath();
-    ctx.moveTo(0, h);
-    for (var hx = 0; hx <= w; hx += 8)
-      ctx.lineTo(hx, h - 30 - Math.sin(hx / 140 + 1) * 18);
-    ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
-
-    this.drawLogo(ctx);
     this.drawBoard(ctx, dt);
+    this.drawMeter(ctx);
     this.drawHud(ctx);
+    this.drawBeams(ctx);
     this.drawParticles(ctx, dt);
     this.drawFloaters(ctx, dt);
-    if (this.banner) this.drawBanner(ctx);
     this.drawPublisherPlaceholder(ctx);
   };
 
-  P.drawLogo = function (ctx) {
-    var cx = this.w / 2, y = Math.max(30, this.boardY * 0.42);
+  P.drawLabBackdrop = function (ctx) {
+    var w = this.w, h = this.h, t = this.time;
+    // floor grid perspective
     ctx.save();
-    ctx.textAlign = 'center';
-    var size = Math.max(20, Math.min(34, this.w * 0.034));
-    ctx.font = '900 ' + size + 'px "Arial Black", Arial, sans-serif';
-    ctx.lineWidth = size * 0.22;
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#5b1a4d';
-    ctx.strokeText('CANDY SURGE', cx, y);
-    var grad = ctx.createLinearGradient(0, y - size, 0, y);
-    grad.addColorStop(0, '#ffe9f7'); grad.addColorStop(0.5, '#ff7ad9'); grad.addColorStop(1, '#ff3fa0');
-    ctx.fillStyle = grad;
-    ctx.fillText('CANDY SURGE', cx, y);
-    // 1000 burst
-    ctx.font = '900 ' + size * 0.72 + 'px "Arial Black", Arial, sans-serif';
-    ctx.strokeStyle = '#7a3c00';
-    ctx.strokeText('1000', cx + size * 5.2, y - size * 0.1);
-    ctx.fillStyle = '#ffd24a';
-    ctx.fillText('1000', cx + size * 5.2, y - size * 0.1);
-    ctx.font = '700 ' + Math.max(9, size * 0.34) + 'px Arial, sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.75)';
-    ctx.fillText('WIN UP TO ' + CFG.maxWinX.toLocaleString() + '×', cx, y + size * 0.62);
+    ctx.strokeStyle = 'rgba(40,90,140,0.18)';
+    ctx.lineWidth = 1;
+    var horizon = h * 0.62;
+    for (var gx = -6; gx <= 6; gx++) {
+      ctx.beginPath();
+      ctx.moveTo(w / 2 + gx * 22, horizon);
+      ctx.lineTo(w / 2 + gx * 180, h);
+      ctx.stroke();
+    }
+    for (var gy = 0; gy < 7; gy++) {
+      var yy = horizon + Math.pow(gy / 7, 2) * (h - horizon);
+      ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(w, yy); ctx.stroke();
+    }
+    ctx.restore();
+    // glowing tube tanks on the sides
+    this.drawTube(ctx, w * 0.06, h * 0.5, h * 0.34, '#19d3ff', t);
+    this.drawTube(ctx, w * 0.94, h * 0.5, h * 0.34, '#8aff3a', t + 1.5);
+  };
+
+  P.drawTube = function (ctx, x, cy, hh, color, t) {
+    var ww = Math.max(22, hh * 0.18);
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ART.roundRectPath(ctx, x - ww / 2, cy - hh / 2, ww, hh, ww * 0.4);
+    var grd = ctx.createLinearGradient(0, cy - hh / 2, 0, cy + hh / 2);
+    grd.addColorStop(0, 'rgba(20,40,60,0.5)');
+    grd.addColorStop(1, color);
+    ctx.fillStyle = grd; ctx.fill();
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+    // bubbles
+    for (var i = 0; i < 4; i++) {
+      var by = cy + hh / 2 - ((t * (30 + i * 10) + i * 50) % hh);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.beginPath(); ctx.arc(x + Math.sin(t * 2 + i) * ww * 0.2, by, ww * 0.12, 0, 7); ctx.fill();
+    }
     ctx.restore();
   };
 
@@ -486,50 +508,28 @@
 
     // frame
     ctx.save();
-    ART.roundRectPath(ctx, bx - 10, by - 10, bw + 20, bh + 20, 18);
-    ctx.fillStyle = 'rgba(20,6,40,0.55)';
-    ctx.shadowColor = 'rgba(255,122,217,0.55)';
-    ctx.shadowBlur = 24;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = 'rgba(255,160,225,0.8)';
-    ctx.stroke();
+    ART.roundRectPath(ctx, bx - 12, by - 12, bw + 24, bh + 24, 18);
+    ctx.fillStyle = 'rgba(8,16,34,0.66)';
+    ctx.shadowColor = 'rgba(25,211,255,0.5)';
+    ctx.shadowBlur = 26; ctx.fill(); ctx.shadowBlur = 0;
+    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(70,180,235,0.8)'; ctx.stroke();
+    // corner bolts
+    ctx.fillStyle = 'rgba(120,200,255,0.7)';
+    [[bx - 12, by - 12], [bx + bw + 12, by - 12], [bx - 12, by + bh + 12], [bx + bw + 12, by + bh + 12]]
+      .forEach(function (p) { ctx.beginPath(); ctx.arc(p[0], p[1], 4, 0, 7); ctx.fill(); });
     ctx.restore();
 
-    // cells (checker tint)
+    // cell wells
     for (var c = 0; c < this.cols; c++) {
       for (var r = 0; r < this.rows; r++) {
         var p = this.cellXY(c, r);
-        ctx.fillStyle = (c + r) % 2 ? 'rgba(255,255,255,0.045)' : 'rgba(255,255,255,0.085)';
-        ART.roundRectPath(ctx, p.x + 1.5, p.y + 1.5, cs - 3, cs - 3, cs * 0.16);
+        ctx.fillStyle = (c + r) % 2 ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.07)';
+        ART.roundRectPath(ctx, p.x + 2, p.y + 2, cs - 4, cs - 4, cs * 0.14);
         ctx.fill();
       }
     }
 
-    // multiplier spot underlays (so symbols sit on top)
-    for (var s = 0; s < this.spots.length; s++) {
-      var sp = this.spots[s];
-      var pp = this.cellXY(sp.c, sp.r);
-      if (sp.value >= 2) {
-        var pulse = 1 + 0.06 * Math.sin(this.time * 5 + sp.c + sp.r);
-        ctx.save();
-        ART.roundRectPath(ctx, pp.x + 2, pp.y + 2, cs - 4, cs - 4, cs * 0.16);
-        ctx.fillStyle = 'rgba(255,210,74,0.20)';
-        ctx.fill();
-        ctx.lineWidth = 2 * pulse;
-        ctx.strokeStyle = 'rgba(255,210,74,0.9)';
-        ctx.stroke();
-        ctx.restore();
-      } else if (sp.hits >= 1) {
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.beginPath();
-        ctx.arc(pp.x + cs * 0.84, pp.y + cs * 0.16, cs * 0.05, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    // symbols (clip to the board so drops appear from under the frame)
+    // symbols (clip to board)
     ctx.save();
     ART.roundRectPath(ctx, bx - 4, by - 4, bw + 8, bh + 8, 14);
     ctx.clip();
@@ -538,102 +538,114 @@
         var cell = this.cells[c2][r2];
         if (!cell || cell.alpha <= 0 || cell.scale <= 0) continue;
         var q = this.cellXY(c2, r2);
-        var size = cs * 0.94 * cell.scale;
+        var size = cs * 0.96 * cell.scale;
         var ox = q.x + (cs - size) / 2;
         var oy = q.y + (cs - size) / 2 + cell.dy;
         ctx.globalAlpha = cell.alpha;
+        var wob = (cell.sym === 'scatter' || cell.sym === 'orb')
+          ? 1 + 0.04 * Math.sin(this.time * 4 + c2 * 1.7 + r2) : 1;
+        var s2 = size * wob, sx = q.x + (cs - s2) / 2, sy = q.y + (cs - s2) / 2 + cell.dy;
         if (cell.glow > 0) {
           ctx.save();
           ctx.shadowColor = 'rgba(255,255,255,0.95)';
-          ctx.shadowBlur = cs * 0.35 * (0.7 + 0.3 * Math.sin(this.time * 9));
-          ART.draw(ctx, cell.sym, ox, oy, size);
+          ctx.shadowBlur = cs * 0.32 * (0.7 + 0.3 * Math.sin(this.time * 9));
+          ART.draw(ctx, cell.sym, sx, sy, s2, cell.mult);
           ctx.restore();
         } else {
-          if (cell.sym === 'scatter') {
-            var wob = 1 + 0.04 * Math.sin(this.time * 4 + c2 * 1.7 + r2);
-            var s2 = size * wob;
-            ART.draw(ctx, cell.sym, q.x + (cs - s2) / 2, q.y + (cs - s2) / 2 + cell.dy, s2);
-          } else {
-            ART.draw(ctx, cell.sym, ox, oy, size);
-          }
+          ART.draw(ctx, cell.sym, sx, sy, s2, cell.mult);
         }
         ctx.globalAlpha = 1;
         cell.glow = Math.max(0, cell.glow - dt * 0.4);
       }
     }
     ctx.restore();
-
-    // multiplier value badges (over symbols)
-    for (var s2 = 0; s2 < this.spots.length; s2++) {
-      var sp2 = this.spots[s2];
-      if (sp2.value < 2) continue;
-      var pq = this.cellXY(sp2.c, sp2.r);
-      this.drawMultBadge(ctx, pq.x + cs / 2, pq.y + cs - cs * 0.16, cs, sp2.value);
-    }
   };
 
-  P.drawMultBadge = function (ctx, cx, cy, cs, value) {
-    var label = 'x' + value;
-    var fs = Math.max(10, cs * (label.length > 4 ? 0.2 : 0.26));
+  /* ---- Invasion Meter -------------------------------------------------- */
+  P.drawMeter = function (ctx) {
+    var cs = this.cell, cap = CFG.invasionMeter.capacity;
+    var bx = this.boardX, by = this.boardY + this.boardH + Math.max(10, cs * 0.16);
+    var bw = this.boardW, bh = Math.max(12, cs * 0.18);
+    if (this.fsHud) return; // hide meter during free spins
     ctx.save();
-    ctx.font = '900 ' + fs + 'px Arial, sans-serif';
-    var tw = ctx.measureText(label).width;
-    var pw = tw + fs * 0.9, ph = fs * 1.45;
-    var grd = ctx.createLinearGradient(cx, cy - ph / 2, cx, cy + ph / 2);
-    grd.addColorStop(0, '#ffe9a8'); grd.addColorStop(0.5, '#ffc83d'); grd.addColorStop(1, '#e08a00');
-    ART.roundRectPath(ctx, cx - pw / 2, cy - ph / 2, pw, ph, ph / 2);
-    ctx.fillStyle = grd;
-    ctx.shadowColor = 'rgba(0,0,0,0.45)';
-    ctx.shadowBlur = 6;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = '#8a5200';
-    ctx.stroke();
-    ctx.fillStyle = '#4d2c00';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(label, cx, cy + fs * 0.06);
+    ART.roundRectPath(ctx, bx, by, bw, bh, bh / 2);
+    ctx.fillStyle = 'rgba(8,16,34,0.8)'; ctx.fill();
+    ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(70,180,235,0.5)'; ctx.stroke();
+    var frac = Math.min(1, this.meter / cap);
+    if (frac > 0) {
+      ctx.save();
+      ART.roundRectPath(ctx, bx, by, bw, bh, bh / 2); ctx.clip();
+      var grd = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+      grd.addColorStop(0, '#19d3ff'); grd.addColorStop(0.6, '#8aff3a'); grd.addColorStop(1, '#ff3b5c');
+      ctx.fillStyle = grd;
+      ctx.fillRect(bx, by, bw * frac, bh);
+      ctx.restore();
+    }
+    ctx.fillStyle = '#cfe6ff';
+    ctx.font = '800 ' + Math.max(9, bh * 0.62) + 'px Arial, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('INVASION METER ' + Math.round(frac * 100) + '%', bx + bw / 2, by + bh / 2 + 0.5);
     ctx.restore();
   };
 
+  /* ---- HUDs ------------------------------------------------------------ */
   P.drawHud = function (ctx) {
     var cs = this.cell;
-    // free spins HUD
     if (this.fsHud) {
-      var y = this.boardY - Math.max(26, cs * 0.42);
+      var y = this.boardY - Math.max(24, cs * 0.46);
+      // free spins counter
       ctx.save();
-      ctx.textAlign = 'center';
-      var fs = Math.max(12, cs * 0.3);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      var fs = Math.max(12, cs * 0.28);
       ctx.font = '900 ' + fs + 'px Arial, sans-serif';
       var txt = 'FREE SPINS ' + this.fsHud.index + ' / ' + this.fsHud.total;
       var tw = ctx.measureText(txt).width + fs * 2;
-      ART.roundRectPath(ctx, this.w / 2 - tw / 2, y - fs, tw, fs * 2, fs);
-      ctx.fillStyle = 'rgba(91,26,77,0.9)';
-      ctx.fill();
-      ctx.lineWidth = 2; ctx.strokeStyle = '#ff7ad9'; ctx.stroke();
-      ctx.fillStyle = '#ffd24a';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(txt, this.w / 2, y + 1);
+      ART.roundRectPath(ctx, this.boardX, y - fs, tw, fs * 2, fs);
+      ctx.fillStyle = 'rgba(10,20,42,0.92)'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#19d3ff'; ctx.stroke();
+      ctx.fillStyle = '#19d3ff'; ctx.fillText(txt, this.boardX + tw / 2, y);
+      // total multiplier
+      var mtxt = 'TOTAL ×' + this.fsMult;
+      ctx.font = '900 ' + fs + 'px Arial, sans-serif';
+      var mw = ctx.measureText(mtxt).width + fs * 2;
+      ART.roundRectPath(ctx, this.boardX + this.boardW - mw, y - fs, mw, fs * 2, fs);
+      ctx.fillStyle = 'rgba(40,10,70,0.92)'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#c264ff'; ctx.stroke();
+      ctx.fillStyle = '#e6c6ff'; ctx.fillText(mtxt, this.boardX + this.boardW - mw / 2, y);
       ctx.restore();
     }
-    // win bar
     if (this.winBar && this.winBar.amount > 0) {
-      var by = this.boardY + this.boardH + Math.max(22, cs * 0.4);
+      var by = this.boardY + this.boardH + Math.max(28, cs * 0.46);
       ctx.save();
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       var f2 = Math.max(13, cs * 0.32);
       ctx.font = '900 ' + f2 + 'px Arial, sans-serif';
-      var label = 'WIN ' + this.fmt(this.winBar.amount) +
-        (this.winBar.tumbles > 1 ? '   •   TUMBLE ×' + this.winBar.tumbles : '');
+      var label = 'WIN ' + this.fmt(this.winBar.amount);
       ctx.lineWidth = f2 * 0.18; ctx.lineJoin = 'round';
-      ctx.strokeStyle = 'rgba(40,8,40,0.85)';
-      ctx.strokeText(label, this.w / 2, by);
-      ctx.fillStyle = '#ffe9a8';
-      ctx.fillText(label, this.w / 2, by);
+      ctx.strokeStyle = 'rgba(5,12,26,0.9)'; ctx.strokeText(label, this.w / 2, by);
+      ctx.fillStyle = '#ffe9a8'; ctx.fillText(label, this.w / 2, by);
       ctx.restore();
     }
+  };
+
+  P.drawBeams = function (ctx) {
+    var alive = [];
+    for (var i = 0; i < this.beams.length; i++) {
+      var b = this.beams[i];
+      var age = this.time - b.born, k = age / b.life;
+      if (k >= 1) continue;
+      ctx.save();
+      ctx.globalAlpha = 1 - k;
+      ctx.strokeStyle = '#8aff3a'; ctx.lineWidth = 3 + (1 - k) * 6;
+      ctx.shadowColor = '#8aff3a'; ctx.shadowBlur = 16;
+      ctx.beginPath();
+      ctx.moveTo(this.w / 2, this.boardY - this.cell * 0.6);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+      ctx.restore();
+      alive.push(b);
+    }
+    this.beams = alive;
   };
 
   P.drawParticles = function (ctx, dt) {
@@ -666,62 +678,25 @@
       ctx.font = '900 ' + fs + 'px Arial, sans-serif';
       ctx.textAlign = 'center';
       ctx.lineWidth = fs * 0.2; ctx.lineJoin = 'round';
-      ctx.strokeStyle = 'rgba(40,8,40,0.9)';
-      ctx.strokeText(f.text, f.x, f.y);
-      ctx.fillStyle = f.color;
-      ctx.fillText(f.text, f.x, f.y);
+      ctx.strokeStyle = 'rgba(5,12,26,0.9)'; ctx.strokeText(f.text, f.x, f.y);
+      ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y);
       ctx.restore();
       alive.push(f);
     }
     this.floaters = alive;
   };
 
-  P.drawBanner = function (ctx) {
-    var b = this.banner;
-    var age = this.time - b.born;
-    var pop = EASE.outBack(Math.min(1, age * 3.5));
-    ctx.save();
-    ctx.fillStyle = 'rgba(15,5,30,0.62)';
-    ctx.fillRect(0, 0, this.w, this.h);
-    ctx.translate(this.w / 2, this.h / 2);
-    ctx.scale(pop, pop);
-    var fs = Math.max(30, Math.min(64, this.w * 0.065));
-    ctx.textAlign = 'center';
-    ctx.font = '900 ' + fs + 'px "Arial Black", Arial, sans-serif';
-    ctx.lineWidth = fs * 0.18; ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#5b1a4d';
-    ctx.strokeText(b.title, 0, -fs * 0.2);
-    var grd = ctx.createLinearGradient(0, -fs, 0, fs * 0.4);
-    grd.addColorStop(0, '#fff');
-    grd.addColorStop(1, b.color || '#ffd24a');
-    ctx.fillStyle = grd;
-    ctx.fillText(b.title, 0, -fs * 0.2);
-    if (b.sub) {
-      ctx.font = '900 ' + fs * 0.5 + 'px Arial, sans-serif';
-      ctx.lineWidth = fs * 0.1;
-      ctx.strokeText(b.sub, 0, fs * 0.75);
-      ctx.fillStyle = '#ffe9a8';
-      ctx.fillText(b.sub, 0, fs * 0.75);
-    }
-    ctx.restore();
-  };
-
   P.drawPublisherPlaceholder = function (ctx) {
-    var w = 92, h = 26, x = 12, y = this.h - h - 10;
+    var w = 96, h = 26, x = 12, y = this.h - h - 10;
     ctx.save();
     ctx.globalAlpha = 0.7;
     ART.roundRectPath(ctx, x, y, w, h, 6);
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.fill();
-    ctx.setLineDash([4, 3]);
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
-    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.10)'; ctx.fill();
+    ctx.setLineDash([4, 3]); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(150,200,255,0.55)'; ctx.stroke();
     ctx.setLineDash([]);
     ctx.font = '700 9px Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(200,225,255,0.85)';
     ctx.fillText('PUBLISHER LOGO', x + w / 2, y + h / 2);
     ctx.restore();
   };
