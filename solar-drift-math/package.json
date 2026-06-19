@@ -1,0 +1,17 @@
+{
+  "name": "solar-drift-math",
+  "version": "1.0.0",
+  "description": "Solar Drift math model — deterministic engine + Stake Engine publication generator + RTP optimiser (math-sdk side).",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "engine.js",
+  "engines": { "node": ">=22.0.0" },
+  "scripts": {
+    "verify": "node verify.js",
+    "simulate": "node simulate.js 200000 base",
+    "generate": "node generate.js",
+    "optimize": "node optimize.js",
+    "inspect": "node inspect.js",
+    "build": "node generate.js && node optimize.js && node inspect.js"
+  }
+}

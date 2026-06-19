@@ -8,6 +8,11 @@ frontend build. Drop the folder on any static host (or open `index.html`) and it
 > server-authoritative outcomes and certified RTP simulation — the in-game Paytable, Rules,
 > and Math Info panels state this explicitly. No real-money play, no wallet integration.
 
+> The game **math** is also provided as a separate, Node-runnable package next to this one,
+> [`solar-drift-math/`](../solar-drift-math/) — the math-sdk side. It emits Stake Engine
+> publication files (`index.json`, `books_*.jsonl.zst`, `lookUpTable_*.csv`) calibrated to
+> 96.20% RTP. This frontend is the playback / presentation layer (web-sdk side).
+
 ## Run it
 
 No build step. Either open `index.html` directly, or serve the folder:
