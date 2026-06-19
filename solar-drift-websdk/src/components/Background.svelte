@@ -1,34 +1,20 @@
 <script lang="ts">
-	import { Rectangle, SpineProvider, SpineTrack } from 'pixi-svelte';
-	import { FadeContainer } from 'components-pixi';
-	import { SECOND } from 'constants-shared/time';
+	import { Rectangle, Sprite } from 'pixi-svelte';
 
 	import { getContext } from '../game/context';
 
 	const context = getContext();
-	const backgroundProps = $derived(
-		context.stateLayoutDerived.normalBackgroundLayout({ scale: 0.5 }),
-	);
-	const showBaseBackground = $derived(context.stateGame.gameType === 'basegame');
-	const showFeatureBackground = $derived(context.stateGame.gameType === 'freegame');
+	const canvas = $derived(context.stateLayoutDerived.canvasSizes());
 </script>
 
-<Rectangle {...context.stateLayoutDerived.canvasSizes()} backgroundColor={0x000000} zIndex={-3} />
+<Rectangle {...context.stateLayoutDerived.canvasSizes()} backgroundColor={0x05010f} zIndex={-3} />
 
-<FadeContainer show={showBaseBackground} duration={SECOND} zIndex={-2}>
-	<SpineProvider key="foregroundAnimation" {...backgroundProps}>
-		<SpineTrack trackIndex={0} animationName={'idle'} loop />
-	</SpineProvider>
-	<SpineProvider key="foregroundAnimation" {...backgroundProps}>
-		<SpineTrack trackIndex={0} animationName={'dust'} loop />
-	</SpineProvider>
-</FadeContainer>
-
-<FadeContainer show={showFeatureBackground} duration={SECOND} zIndex={-1}>
-	<SpineProvider key="foregroundFeatureAnimation" {...backgroundProps}>
-		<SpineTrack trackIndex={0} animationName={'idle'} loop />
-	</SpineProvider>
-	<SpineProvider key="foregroundFeatureAnimation" {...backgroundProps}>
-		<SpineTrack trackIndex={0} animationName={'dust'} loop />
-	</SpineProvider>
-</FadeContainer>
+<Sprite
+	key="background"
+	x={canvas.width / 2}
+	y={canvas.height / 2}
+	anchor={0.5}
+	width={canvas.width}
+	height={canvas.height}
+	zIndex={-2}
+/>

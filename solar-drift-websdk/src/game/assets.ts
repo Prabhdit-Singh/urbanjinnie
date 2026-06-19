@@ -14,92 +14,48 @@ export default {
 		preload: true,
 	},
 	H1: {
-		type: 'spine',
-		src: {
-			atlas: new URL('../../assets/spines/symbols/symbols.atlas', import.meta.url).href,
-			skeleton: new URL('../../assets/spines/symbols/h1.json', import.meta.url).href,
-			scale: 2,
-		},
+		type: 'sprite',
+		src: new URL('../../assets/symbols/solar-commander.png', import.meta.url).href,
 	},
 	H2: {
-		type: 'spine',
-		src: {
-			atlas: new URL('../../assets/spines/symbols/symbols.atlas', import.meta.url).href,
-			skeleton: new URL('../../assets/spines/symbols/h2.json', import.meta.url).href,
-			scale: 2,
-		},
+		type: 'sprite',
+		src: new URL('../../assets/symbols/energy-scientist.png', import.meta.url).href,
 	},
 	H3: {
-		type: 'spine',
-		src: {
-			atlas: new URL('../../assets/spines/symbols/symbols.atlas', import.meta.url).href,
-			skeleton: new URL('../../assets/spines/symbols/h3.json', import.meta.url).href,
-			scale: 2,
-		},
+		type: 'sprite',
+		src: new URL('../../assets/symbols/solar-core.png', import.meta.url).href,
 	},
 	H4: {
-		type: 'spine',
-		src: {
-			atlas: new URL('../../assets/spines/symbols/symbols.atlas', import.meta.url).href,
-			skeleton: new URL('../../assets/spines/symbols/h4.json', import.meta.url).href,
-			scale: 2,
-		},
+		type: 'sprite',
+		src: new URL('../../assets/symbols/drift-ship.png', import.meta.url).href,
 	},
 	H5: {
-		type: 'spine',
-		src: {
-			atlas: new URL('../../assets/spines/symbols/symbols.atlas', import.meta.url).href,
-			skeleton: new URL('../../assets/spines/symbols/h5.json', import.meta.url).href,
-			scale: 2,
-		},
+		type: 'sprite',
+		src: new URL('../../assets/symbols/singularity.png', import.meta.url).href,
 	},
 	L1: {
-		type: 'spine',
-		src: {
-			atlas: new URL('../../assets/spines/symbols/symbols.atlas', import.meta.url).href,
-			skeleton: new URL('../../assets/spines/symbols/l1.json', import.meta.url).href,
-			scale: 2,
-		},
+		type: 'sprite',
+		src: new URL('../../assets/symbols/A.png', import.meta.url).href,
 	},
 	L2: {
-		type: 'spine',
-		src: {
-			atlas: new URL('../../assets/spines/symbols/symbols.atlas', import.meta.url).href,
-			skeleton: new URL('../../assets/spines/symbols/l2.json', import.meta.url).href,
-			scale: 2,
-		},
+		type: 'sprite',
+		src: new URL('../../assets/symbols/K.png', import.meta.url).href,
 	},
 	L3: {
-		type: 'spine',
-		src: {
-			atlas: new URL('../../assets/spines/symbols/symbols.atlas', import.meta.url).href,
-			skeleton: new URL('../../assets/spines/symbols/l3.json', import.meta.url).href,
-			scale: 2,
-		},
+		type: 'sprite',
+		src: new URL('../../assets/symbols/Q.png', import.meta.url).href,
 	},
 	L4: {
-		type: 'spine',
-		src: {
-			atlas: new URL('../../assets/spines/symbols/symbols.atlas', import.meta.url).href,
-			skeleton: new URL('../../assets/spines/symbols/l4.json', import.meta.url).href,
-			scale: 2,
-		},
+		type: 'sprite',
+		src: new URL('../../assets/symbols/J.png', import.meta.url).href,
 	},
 	M: {
-		type: 'spine',
-		src: {
-			atlas: new URL('../../assets/spines/symbols2/symbols2.atlas', import.meta.url).href,
-			skeleton: new URL('../../assets/spines/symbols2/M.json', import.meta.url).href,
-			scale: 2,
-		},
+		type: 'sprite',
+		src: new URL('../../assets/symbols/energy-core-multiplier.png', import.meta.url).href,
 	},
 	S: {
-		type: 'spine',
-		src: {
-			atlas: new URL('../../assets/spines/symbols2/symbols2.atlas', import.meta.url).href,
-			skeleton: new URL('../../assets/spines/symbols2/S.json', import.meta.url).href,
-			scale: 2,
-		},
+		type: 'sprite',
+		src: new URL('../../assets/symbols/black-hole-scatter.png', import.meta.url).href,
 	},
 	explosion: {
 		type: 'spine',
@@ -110,12 +66,8 @@ export default {
 		},
 	},
 	W: {
-		type: 'spine',
-		src: {
-			atlas: new URL('../../assets/spines/symbols3/symbols3.atlas', import.meta.url).href,
-			skeleton: new URL('../../assets/spines/symbols3/W.json', import.meta.url).href,
-			scale: 2,
-		},
+		type: 'sprite',
+		src: new URL('../../assets/symbols/cosmic-wild.png', import.meta.url).href,
 	},
 	reelsFrame: {
 		type: 'sprites',
@@ -271,6 +223,11 @@ export default {
 	sound: {
 		type: 'audio',
 		src: new URL('../../assets/audio/sounds.json', import.meta.url).href,
+		preload: true,
+	},
+	background: {
+		type: 'sprite',
+		src: new URL('../../assets/backgrounds/solar-drift-background.png', import.meta.url).href,
 		preload: true,
 	},
 } as const;

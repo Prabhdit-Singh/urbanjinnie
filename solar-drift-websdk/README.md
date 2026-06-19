@@ -39,19 +39,32 @@ pnpm run storybook --filter=solar-drift           # browse books/bookEvents
 The production build (`build/index.html` + `client/`) is what you upload to the Stake Engine
 dashboard. This port has been verified to build with `pnpm run build --filter=solar-drift`.
 
-## Remaining work (art & polish)
+## Art reskin (done)
 
-This port nails the **game logic, math identity, board, bet modes, and book/event wiring**.
-It deliberately does **not** include bespoke art — it inherits the template's asset slots.
-To finish the visual skin:
+The reels and stage use **real Solar Drift art**, sprite-based:
 
-1. Drop Solar Drift art into `static/assets/` and repoint `src/game/assets.ts`.
-   The template uses **Spine** animations + bitmap fonts for win/scatter/wild states; Solar
-   Drift ships flat PNGs, so set those symbol states to `type: 'sprite'` in
-   `src/game/constants.ts` (`SYMBOL_INFO_MAP`) and provide the PNGs.
-2. Replace background, free-spins intro/outro, transition and big-win assets, and the audio
-   sprite (`static/assets/audio/sounds.json`).
+- `static/assets/symbols/*.png` — the actual Solar Drift symbol art, wired in `src/game/assets.ts`.
+- `static/assets/backgrounds/solar-drift-background.png` — the game background, rendered by
+  `src/components/Background.svelte`.
+- `src/game/constants.ts` (`SYMBOL_INFO_MAP`) is sprite-only for every symbol state
+  (static / spin / land / win / postWinStatic) — no Spine dependency for symbols.
+
+Symbol key → art: `W` cosmic-wild · `S` black-hole-scatter · `H5` singularity ·
+`H1` solar-commander · `H2` energy-scientist · `H3` solar-core · `H4` drift-ship ·
+`M` energy-core-multiplier · `L1` A · `L2` K · `L3` Q · `L4` J. Verified to build; the bundled
+client contains the Solar Drift symbol + background images.
+
+## Remaining work (feature polish)
+
+The symbol/background reskin is in place. Not yet ported (and not authorable from the flat
+PNGs alone) are the template's **Spine** feature animations and **bitmap fonts / audio atlas**:
+
+1. Free-spins intro/outro, transition, big-win, anticipation, reel-glow and coin animations
+   still reference the template's Spine assets (`src/game/assets.ts`). Supply Solar Drift
+   equivalents or simplify those components.
+2. Bitmap fonts (`gold` / `silver` / `purple`) and the audio sprite
+   (`static/assets/audio/sounds.json`) must be provided for text and sound to render.
 3. Re-tune `bookEventHandlerMap.ts` sound/animation cues to taste.
 
-Until then the game runs on web-sdk with Solar Drift's math and the template's placeholder
-visuals.
+Until those land, the reels, symbols and background render as Solar Drift while the feature
+flourishes use the template's (un-shipped) asset slots.
