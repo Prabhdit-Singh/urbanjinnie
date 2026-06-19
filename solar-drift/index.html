@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- PUBLISH_READY_BUILD: Solar Drift frontend runtime -->
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="description" content="Solar Drift — a 5x4, 1024-ways cosmic slot demo with free spins, respins, and Singularity mode. Frontend presentation build."/>
+  <title>Solar Drift</title>
+  <link rel="icon" href="assets/logos/solar-drift-logo.png"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+<main id="app">
+  <div id="cinematicLayer" class="cinematic-layer">
+    <div class="living-stars layer-a"></div>
+    <div class="living-stars layer-b"></div>
+    <div class="meteor-field"><i></i><i></i><i></i></div>
+    <div class="solar-flare"></div>
+    <div id="cinematicPulse" class="cinematic-pulse"></div>
+    <div id="energyTrail" class="energy-trail"></div>
+  </div>
+  <!-- Loading -->
+  <section id="loadingScreen" class="screen active loading-screen">
+    <div class="screen-bg loading-bg"></div>
+    <div class="shade"></div>
+    <img class="loading-logo" src="assets/logos/solar-drift-logo.png" alt="Solar Drift"/>
+    <div class="loading-shell">
+      <div id="loadingStatus" class="loading-copy">INITIATING WARP SEQUENCE...</div>
+      <div id="assetPreloadStatus" class="asset-preload-status">Checking game assets...</div>
+      <div class="loading-bar">
+        <div id="loadingFill" class="loading-fill"><i></i><b></b></div>
+        <div id="loadingTicks" class="loading-ticks"></div>
+        <span id="loadingPercent">0%</span>
+      </div>
+      <button id="enterBtn" class="cta hidden">ENTER THE DRIFT</button>
+    </div>
+    <div class="publisher-tag">
+      <span>PUBLISHED BY</span>
+      <img src="assets/logos/urban-games-logo.png" alt="Urban Games"/>
+    </div>
+  </section>
+
+  <!-- Gameplay -->
+  <section id="gameScreen" class="screen game-screen">
+    <div id="stageViewport" class="stage-viewport">
+      <div id="stage" class="stage">
+        <div class="reference-plate"></div>
+        <div class="grid-cover">
+          <div id="reelGrid" class="reel-grid"></div>
+        </div>
+
+        <button id="menuBtn" class="hotspot menu-hot" aria-label="Menu"></button>
+        <button id="soundBtn" class="hotspot sound-hot" aria-label="Sound"></button>
+        <button id="paytableQuickBtn" class="hotspot info-hot" aria-label="Paytable"></button>
+        <button id="buyBonusBtn" class="hotspot buy-hot" aria-label="Buy Bonus"></button>
+        <button id="betDownBtn" class="hotspot bet-down-hot" aria-label="Bet Down"></button>
+        <button id="betUpBtn" class="hotspot bet-up-hot" aria-label="Bet Up"></button>
+        <button id="spinBtn" class="hotspot spin-hot" aria-label="Spin"></button>
+        <div id="spinVisualRing" class="spin-visual-ring"></div>
+        <button id="autoBtn" class="hotspot auto-hot" aria-label="Auto Play"></button>
+        <button id="turboBtn" class="hotspot turbo-hot" aria-label="Turbo"></button>
+        <button id="historyBtn" class="hotspot history-hot" aria-label="History"></button>
+
+        <div id="liveBalance" class="live-value balance-live">$1,000.00</div>
+        <div id="liveBet" class="live-value bet-live">$1.00</div>
+        <div id="liveWin" class="live-value win-live">$0.00</div>
+        <div id="baseFeatureTicker" class="base-feature-ticker">CORE MULTIPLIER READY</div>
+        <div id="cinematicStatus" class="cinematic-status">DRIFT ENGINE IDLE</div>
+        <div id="freeSpinCounter" class="free-spin-counter" aria-live="polite">
+          <span>FREE SPINS</span>
+          <strong id="freeSpinCounterValue">0</strong>
+        </div>
+
+        <div class="scale-badge" id="scaleBadge">1920×1080 stage • responsive</div>
+      </div>
+    </div>
+    <div id="toast" class="toast"></div>
+  </section>
+
+
+
+  <section id="bonusTriggerCutscene" class="screen bonus-trigger-cutscene">
+    <div class="screen-bg feature-bg"></div>
+    <div id="cutsceneVortex" class="cutscene-vortex"></div>
+    <div class="shade"></div>
+    <div class="cutscene-symbols" id="cutsceneSymbols"></div>
+    <h1 id="cutsceneTitle">BLACK HOLE FREE SPINS</h1>
+    <p id="cutsceneSub">THE VOID HAS OPENED</p>
+    <div class="cutscene-progress"><span id="cutsceneProgress"></span></div>
+  </section>
+
+
+  <section id="bonusSuspenseScreen" class="screen bonus-suspense-screen">
+    <div class="screen-bg feature-bg"></div>
+    <div class="bonus-vortex"></div>
+    <div class="shade"></div>
+    <img class="feature-logo" src="assets/logos/solar-drift-logo.png" alt="Solar Drift"/>
+    <div class="bonus-suspense-shell">
+      <div class="bonus-suspense-top">BUY BONUS CONFIRMED</div>
+      <div id="bonusSuspenseStage" class="bonus-suspense-stage">PHASE 1 / 4</div>
+      <div class="bonus-orbital-ring">
+        <div class="bonus-orbital-ring-inner"></div>
+        <img id="bonusSuspenseIcon" src="assets/symbols/black-hole-scatter.png" alt="Feature Icon"/>
+      </div>
+      <h1 id="bonusSuspenseTitle">BLACK HOLE FREE SPINS</h1>
+      <h2 id="bonusSuspenseSubTitle" class="bonus-suspense-subtitle">VOID GATE OPENING</h2>
+      <p id="bonusSuspenseText">STABILIZING THE WARP GATE...</p>
+      <div class="bonus-countdown-row">
+        <div class="bonus-count-pill"><span>FEATURE COST</span><strong id="bonusSuspenseCost">$100.00</strong></div>
+        <div class="bonus-count-pill"><span>LAUNCH IN</span><strong id="bonusSuspenseCount">3</strong></div>
+      </div>
+      <div class="bonus-suspense-progress">
+        <div id="bonusSuspenseProgress" class="bonus-suspense-progress-fill"></div>
+      </div>
+      <div class="bonus-suspense-flavour" id="bonusSuspenseFlavour">Charging quantum engines...</div>
+      <div id="bonusSuspenseRisk" class="bonus-suspense-risk">SYSTEM STATUS: STABLE</div>
+    </div>
+  </section>
+
+
+  <!-- Feature screens -->
+  <section id="freeIntroScreen" class="screen feature-screen">
+    <div class="screen-bg feature-bg"></div>
+    <div class="vortex"></div>
+    <div class="shade"></div>
+    <img class="feature-logo" src="assets/logos/solar-drift-logo.png" alt="Solar Drift"/>
+    <h1>BLACK HOLE<br/>FREE SPINS</h1>
+    <p>PRESS START TO ENTER THE VORTEX</p>
+    <div id="freeIntroCounter" class="free-intro-counter">FREE SPINS AWARDED: <strong>10</strong></div>
+    <button id="startFreeBtn" class="cta">START FREE SPINS</button>
+  </section>
+
+  <section id="freeSpinsScreen" class="screen feature-play">
+    <div class="screen-bg feature-bg"></div>
+    <div class="vortex"></div>
+    <div class="shade"></div>
+    <div class="feature-hud">
+      <div><span>FREE SPINS</span><strong id="freeLeft">10</strong></div>
+      <div><span>MULTIPLIER</span><strong>x<span id="freeMult">2</span></strong></div>
+      <div><span>TOTAL WIN</span><strong id="freeTotal">$0.00</strong></div>
+    </div>
+    <div class="feature-grid-shell">
+      <div id="freeGrid" class="reel-grid"></div>
+    </div>
+    <div class="feature-actions">
+      <button id="freeSpinBtn" class="modal-btn gold">SPIN</button>
+      <button data-back-main class="modal-btn">BACK TO MAIN</button>
+    </div>
+  </section>
+
+  <section id="stormScreen" class="screen feature-play">
+    <div class="screen-bg feature-bg"></div>
+    <div class="stormwash"></div>
+    <div class="shade"></div>
+    <div class="feature-hud">
+      <div><span>RESPINS</span><strong id="stormRespins">3</strong></div>
+      <div><span>LOCKED CORES</span><strong id="stormLocked">4</strong></div>
+      <div><span>TOTAL WIN</span><strong id="stormTotal">$0.00</strong></div>
+    </div>
+    <div class="feature-grid-shell storm-shell">
+      <div id="stormGrid" class="reel-grid"></div>
+    </div>
+    <div class="feature-copy">LOCKED! ALL POSITIONS HELD</div>
+    <div class="feature-actions">
+      <button id="stormSpinBtn" class="modal-btn gold">RESPIN</button>
+      <button data-back-main class="modal-btn">BACK TO MAIN</button>
+    </div>
+  </section>
+
+  <section id="singularityScreen" class="screen feature-play singularity-screen">
+    <div class="screen-bg feature-bg"></div>
+    <div class="vortex intense"></div>
+    <div class="shade"></div>
+    <h1>SINGULARITY MODE</h1>
+    <p>7×7 GRID · ALL WINS MULTIPLIED</p>
+    <div class="singularity-shell">
+      <div id="singularityGrid" class="singularity-grid"></div>
+    </div>
+    <div class="feature-actions">
+      <button id="singularitySpinBtn" class="modal-btn gold">PLAY</button>
+      <button data-back-main class="modal-btn">BACK TO MAIN</button>
+    </div>
+  </section>
+
+  <section id="exitScreen" class="screen exit-screen">
+    <div class="screen-bg feature-bg"></div>
+    <div class="shade"></div>
+    <p class="thanks">THANKS FOR PLAYING</p>
+    <img src="assets/logos/solar-drift-logo.png" alt="Solar Drift"/>
+    <p class="see-you">SEE YOU IN THE NEXT DRIFT</p>
+    <div class="feature-actions">
+      <button id="playAgainBtn" class="cta">PLAY AGAIN</button>
+      <button id="returnBtn" class="alt-cta">RETURN</button>
+    </div>
+  </section>
+
+  <!-- Modals -->
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <section id="bonusModal" class="modal-card wide hidden">
+      <button class="close-btn" data-close>×</button>
+      <h2>BUY BONUS</h2>
+      <p class="modal-sub">Choose a Solar Drift feature entry.</p>
+      <div class="bonus-grid">
+        <article class="bonus-card" data-feature="freeIntroScreen" data-price="100" data-title="Black Hole Free Spins" data-type="normal">
+          <img src="assets/symbols/black-hole-scatter.png" alt="Black Hole Scatter"/>
+          <h3>BLACK HOLE FREE SPINS</h3>
+          <p>10 Free Spins · Starting Multiplier x2</p>
+          <strong>100× BET</strong>
+          <button>BUY</button>
+        </article>
+        <article class="bonus-card" data-feature="stormScreen" data-price="150" data-title="Solar Storm Respins">
+          <img src="assets/symbols/locked-core.png" alt="Locked Core"/>
+          <h3>SOLAR STORM RESPINS</h3>
+          <p>Locked Cores hold while new symbols land.</p>
+          <strong>150× BET</strong>
+          <button>BUY</button>
+        </article>
+        <article class="bonus-card" data-feature="freeIntroScreen" data-price="250" data-title="Super Free Spins" data-type="super">
+          <img src="assets/symbols/energy-core-multiplier.png" alt="Energy Core"/>
+          <h3>SUPER FREE SPINS</h3>
+          <p>15 Free Spins · Starting Multiplier x5</p>
+          <strong>250× BET</strong>
+          <button>BUY</button>
+        </article>
+        <article class="bonus-card" data-feature="singularityScreen" data-price="500" data-title="Singularity Buy">
+          <img src="assets/symbols/singularity.png" alt="Singularity"/>
+          <h3>SINGULARITY BUY</h3>
+          <p>Guaranteed entry into Singularity Mode.</p>
+          <strong>500× BET</strong>
+          <button>BUY</button>
+        </article>
+      </div>
+    </section>
+
+
+    <section id="bonusConfirmModal" class="modal-card confirm-modal hidden">
+      <button class="close-btn" data-close>×</button>
+      <h2 id="confirmFeatureTitle">CONFIRM BUY</h2>
+      <p id="confirmFeatureText" class="modal-sub">Confirm feature purchase.</p>
+      <div class="confirm-price-box">
+        <span>FEATURE COST</span>
+        <strong id="confirmFeatureCost">$0.00</strong>
+      </div>
+      <div class="confirm-actions">
+        <button id="confirmBuyBtn" class="modal-btn gold">CONFIRM BUY</button>
+        <button id="cancelBuyBtn" class="modal-btn">CANCEL</button>
+      </div>
+    </section>
+
+    <section id="menuModal" class="modal-card hidden">
+      <button class="close-btn" data-close>×</button>
+      <h2>SOLAR DRIFT MENU</h2>
+      <div class="menu-grid">
+        <button id="openPaytableBtn">PAYTABLE</button>
+        <button id="openSettingsBtn">SETTINGS</button>
+        <button id="openHistoryBtn">HISTORY</button>
+        <button id="openExitBtn">EXIT SCREEN</button>
+        <button id="demoFreeBtn">FREE SPINS</button>
+        <button id="demoStormBtn">RESPINS</button>
+        <button id="demoSingularityBtn">SINGULARITY</button>
+        <button id="resetBtn">RESET DEMO</button><button id="openMathBtn">MATH INFO</button><button id="openRulesBtn">RULES</button>
+      </div>
+    </section>
+
+    <section id="paytableModal" class="modal-card wide hidden">
+      <button class="close-btn" data-close>×</button>
+      <h2>PAYTABLE</h2>
+      <p class="modal-sub">1024 ways. Matching symbols pay from left to right.</p>
+      <div id="paytableList" class="paytable-list"></div>
+      <div class="rules">
+        <h3>RTP DISPLAY</h3>
+        <p><b>Demo target RTP:</b> 96.20% · <b>Volatility:</b> High · <b>Max Win:</b> 10,000× bet</p>
+        <p><b>Note:</b> Final casino deployment must connect this frontend to approved server-side math and certified RTP simulation.</p>
+
+        <h3>FEATURE RULES</h3>
+        <p><b>Black Hole Scatter:</b> 3+ triggers Free Spins.</p>
+        <p><b>Cosmic Wild:</b> substitutes for regular symbols.</p>
+        <p><b>Energy Core:</b> adds multipliers and fills the Energy Core Collection bar.</p>
+        <p><b>Locked Core:</b> locks during respins.</p>
+        <p><b>Singularity:</b> opens the 7×7 mode.</p>
+      </div>
+    </section>
+
+    <section id="settingsModal" class="modal-card hidden">
+      <button class="close-btn" data-close>×</button>
+      <h2>SETTINGS</h2>
+      <label class="setting-row">Music Volume <input type="range" value="80"/></label>
+      <label class="setting-row">Sound Volume <input type="range" value="75"/></label>
+      <label class="setting-row checkbox-row"><span>Ambient Effects</span><input type="checkbox" checked/></label>
+      <label class="setting-row checkbox-row"><span>Quick Spin</span><input id="quickSpin" type="checkbox" checked/></label>
+    </section>
+
+
+
+    <section id="autoModal" class="modal-card auto-modal hidden">
+      <button class="close-btn" data-close>×</button>
+      <h2>AUTOPLAY</h2>
+      <p class="modal-sub">Choose autoplay length and stop conditions.</p>
+      <div class="auto-options">
+        <button data-auto-spins="10">10 SPINS</button>
+        <button data-auto-spins="25">25 SPINS</button>
+        <button data-auto-spins="50">50 SPINS</button>
+        <button data-auto-spins="100">100 SPINS</button>
+      </div>
+      <div class="auto-rules">
+        <label class="setting-row checkbox-row"><span>Stop on bonus trigger</span><input id="autoStopBonus" type="checkbox" checked/></label>
+        <label class="setting-row checkbox-row"><span>Stop on win over 25× bet</span><input id="autoStopBigWin" type="checkbox" checked/></label>
+        <label class="setting-row checkbox-row"><span>Stop on balance decrease over 50%</span><input id="autoStopLoss" type="checkbox" checked/></label>
+      </div>
+      <div class="confirm-actions">
+        <button id="autoStopBtn" class="modal-btn">STOP AUTOPLAY</button>
+      </div>
+    </section>
+
+
+
+    <section id="rulesModal" class="modal-card wide hidden">
+      <button class="close-btn" data-close>×</button>
+      <h2>GAME RULES</h2>
+      <div class="rules">
+        <h3>BASE GAME</h3>
+        <p><b>Solar Drift</b> is a 5×4, 1024 ways slot. Wins pay from the leftmost reel to the right on adjacent reels.</p>
+        <p><b>Wild:</b> Cosmic Wild substitutes for all regular pay symbols.</p>
+        <p><b>Scatter:</b> 3+ Black Hole Scatters trigger Free Spins.</p>
+        <p><b>Free Spins:</b> 3 scatters award 10 spins, 4 award 12 spins, and 5+ award 15 spins. Free Spins can retrigger.</p>
+        <p><b>Solar Storm Respins:</b> Locked Cores hold. A new Locked Core resets respins to 3.</p>
+        <p><b>Singularity:</b> special 7×7 mode with enhanced multiplier behavior.</p>
+        <p><b>Bonus Buy:</b> Each bonus has a disclosed cost before confirmation and goes through a suspense launch screen.</p>
+        <p><b>RTP:</b> demo target 96.20%. <b>Volatility:</b> High. <b>Max Win:</b> 10,000× bet.</p>
+        <p><b>Malfunction voids all pays and plays.</b></p>
+      </div>
+    </section>
+
+
+
+    <section id="errorModal" class="modal-card error-modal hidden">
+      <button class="close-btn" data-close>×</button>
+      <h2 id="errorTitle">GAME MESSAGE</h2>
+      <p id="errorMessage" class="modal-sub">Something happened.</p>
+      <div class="confirm-actions">
+        <button id="errorRetryBtn" class="modal-btn gold">RETRY</button>
+        <button id="errorCloseBtn" class="modal-btn">CLOSE</button>
+      </div>
+    </section>
+
+
+    <section id="mathModal" class="modal-card wide hidden">
+      <button class="close-btn" data-close>×</button>
+      <h2>MATH INFO</h2>
+      <div class="rules">
+        <p><b>Game Type:</b> 5×4, 1024 Ways</p>
+        <p><b>Target RTP:</b> 96.20%</p>
+        <p><b>Volatility:</b> High</p>
+        <p><b>Maximum Win:</b> 10,000× bet</p>
+        <p><b>Bonus Buys:</b> Black Hole Free Spins, Solar Storm Respins, Super Free Spins, Singularity Buy.</p>
+        <p><b>Production requirement:</b> frontend must connect to server-authoritative math outcomes before real-money release.</p>
+      </div>
+    </section>
+
+
+    <section id="historyModal" class="modal-card hidden">
+      <button class="close-btn" data-close>×</button>
+      <h2>GAME HISTORY</h2>
+      <div id="historyTable" class="history-table"></div>
+    </section>
+  </div>
+
+  <div id="winOverlay" class="win-overlay hidden">
+    <div class="burst"></div>
+    <h2 id="winTier">BIG WIN</h2>
+    <strong id="winAmount">$0.00</strong><p id="winSubtitle" class="win-subtitle">COLLECT YOUR WIN</p>
+    <button id="collectBtn" class="cta">COLLECT</button>
+  </div>
+
+  <div id="mobileControlDock" class="mobile-control-dock" aria-label="Mobile portrait controls">
+    <div class="mobile-top-row">
+      <button id="mMenuBtn" aria-label="Open menu">☰</button>
+      <div class="mobile-stat"><span>BALANCE</span><strong id="mBalance">$1,000.00</strong></div>
+      <button id="mSoundBtn" aria-label="Toggle sound">🔊</button>
+    </div>
+    <div class="mobile-mid-row">
+      <button id="mBuyBonusBtn" class="m-buy">BUY BONUS</button>
+      <button id="mAutoBtn" class="m-auto">AUTO</button>
+    </div>
+    <div class="mobile-bottom-row">
+      <button id="mBetDownBtn" aria-label="Decrease bet">−</button>
+      <div class="mobile-stat bet"><span>BET</span><strong id="mBet">$1.00</strong></div>
+      <button id="mSpinBtn" class="m-spin" aria-label="Spin">SPIN</button>
+      <div class="mobile-stat win"><span>WIN</span><strong id="mWin">$0.00</strong></div>
+      <button id="mBetUpBtn" aria-label="Increase bet">+</button>
+    </div>
+  </div>
+
+</main>
+<script src="js/game.js"></script>
+<script src="js/audio-manager.js"></script>
+<script src="js/cinematic.js"></script>
+<script src="js/frontend-100.js"></script>
+</body>
+</html>
