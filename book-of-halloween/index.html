@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book of Halloween — Slot Demo</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- top bar -->
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">🎃</span> DEMO CASINO</div>
+      <div class="topbar-right">
+        <div class="balance-pill">
+          <span class="balance-label">Balance</span>
+          <span id="balance">$0.00</span>
+          <button id="btnReset" class="icon-btn" title="Reset demo balance">↺</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- game card -->
+    <main class="game-card">
+      <div class="game-shell">
+        <!-- control panel -->
+        <aside class="panel">
+          <div class="title-block">
+            <h1>BOOK OF<br><span>HALLOWEEN</span></h1>
+            <p class="sub">5 × 3 · 10 Lines · Expanding Spins</p>
+          </div>
+
+          <div class="field">
+            <div class="field-head"><label>Total Bet</label></div>
+            <div class="bet-row">
+              <button id="betDown" class="mini-btn">−</button>
+              <input id="betValue" type="text" readonly value="$1.00">
+              <button id="betUp" class="mini-btn">+</button>
+            </div>
+            <button id="betMax" class="mini-btn wide">Max Bet</button>
+          </div>
+
+          <div id="manualPane">
+            <button id="btnSpin" class="spin-btn">SPIN</button>
+            <button id="btnAuto" class="auto-btn">Auto ×10</button>
+          </div>
+
+          <div id="fsBanner" class="fs-banner" style="display:none">
+            <div class="fs-line"><b id="fsRemain">0</b> Free Spins left</div>
+            <div class="fs-line small">Special: <b id="fsSpecial">—</b></div>
+            <div class="fs-line small">Bonus win <b id="fsWin">$0.00</b></div>
+          </div>
+
+          <div class="panel-foot">
+            <div class="lastwin">Last win <b id="lastWin">—</b></div>
+            <div class="icon-row">
+              <button id="btnSound" class="icon-btn" title="Sound">🔊</button>
+              <button id="btnInfo" class="icon-btn" title="Paytable &amp; rules">ⓘ</button>
+            </div>
+          </div>
+          <p id="statusLine" class="status">Spin the reels…</p>
+        </aside>
+
+        <!-- game stage -->
+        <section class="stage">
+          <canvas id="game" width="960" height="640"></canvas>
+          <div id="overlay" class="overlay"></div>
+        </section>
+      </div>
+
+      <!-- game footer -->
+      <footer class="game-footer">
+        <div class="pub-logo" title="Publisher logo placeholder">PUBLISHER<br>LOGO</div>
+        <div class="footer-mid">
+          <b>BOOK OF HALLOWEEN</b>
+          <span>RTP 96% · Max win 5,000× · 5×3 · 10 Lines</span>
+        </div>
+        <div class="footer-right">
+          <span>Demo build · No real money</span>
+          <span class="muted">Procedural art · zero binary assets</span>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- info / paytable modal -->
+  <div id="infoModal" class="modal">
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <h2>Game Info</h2>
+        <button id="infoClose" class="icon-btn">✕</button>
+      </div>
+      <div class="info-scroll">
+        <h3>How to play</h3>
+        <ul>
+          <li><b>5×3 reels, 10 fixed lines:</b> line wins pay left-to-right from reel&nbsp;1, 3 or more matching symbols.</li>
+          <li><b>The Book is Scatter &amp; Wild:</b> it substitutes for every symbol and pays anywhere on the screen — 2, 3, 4 or 5 Books pay 1×, 2×, 20× or 200× total bet.</li>
+          <li><b>Free Spins:</b> land 3+ Books to win <b>10 Free Spins</b>. One symbol is chosen at random as the <b>Special Expanding Symbol</b>.</li>
+          <li><b>Expanding Symbol:</b> during Free Spins the special symbol expands to cover its whole reel and pays on any position. 3+ Books retrigger another 10 spins.</li>
+          <li><b>Max win:</b> 5,000× total bet.</li>
+        </ul>
+        <h3>Paytable <span class="muted small">(× bet per line — 3 / 4 / 5 of a kind)</span></h3>
+        <div id="paytableGrid"></div>
+        <p class="muted">Demo entertainment build — no real-money play. All symbol art is drawn
+        procedurally on canvas and all sound is synthesized; there are no image or audio files.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

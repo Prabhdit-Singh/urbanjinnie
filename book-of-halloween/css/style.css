@@ -1,0 +1,194 @@
+/* =========================================================================
+ * BOOK OF HALLOWEEN — dark Halloween casino shell
+ * Standalone styling; does not touch the sibling Candy Surge theme.
+ * ========================================================================= */
+:root {
+  --bg:        #0b0410;
+  --bg2:       #160a24;
+  --panel:     #1d1030;
+  --panel2:    #271640;
+  --ink:       #f4ecff;
+  --muted:     #b6a3d0;
+  --orange:    #ff8a1e;
+  --orange2:   #ffba5a;
+  --purple:    #8a3ff0;
+  --green:     #54e06a;
+  --line:      rgba(255,255,255,0.08);
+  --glow:      0 0 24px rgba(255,138,30,0.45);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(138,63,240,0.25), transparent 60%),
+    radial-gradient(900px 500px at 10% 110%, rgba(255,138,30,0.16), transparent 60%),
+    var(--bg);
+  min-height: 100vh;
+}
+
+#app { max-width: 1180px; margin: 0 auto; padding: 18px; }
+
+/* ---- top bar ---------------------------------------------------------- */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 4px 16px;
+}
+.brand { font-weight: 800; letter-spacing: 1px; font-size: 18px; }
+.brand-mark { margin-right: 6px; }
+.balance-pill {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--panel); border: 1px solid var(--line);
+  padding: 8px 12px; border-radius: 12px; font-weight: 700;
+}
+.balance-label { color: var(--muted); font-weight: 600; font-size: 13px; }
+#balance { color: var(--orange2); }
+
+/* ---- card ------------------------------------------------------------- */
+.game-card {
+  background: linear-gradient(180deg, var(--bg2), var(--bg));
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+}
+.game-shell { display: grid; grid-template-columns: 290px 1fr; gap: 14px; }
+
+/* ---- control panel ---------------------------------------------------- */
+.panel {
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  border: 1px solid var(--line); border-radius: 14px;
+  padding: 16px; display: flex; flex-direction: column; gap: 14px;
+}
+.title-block h1 {
+  margin: 0; font-family: Georgia, "Times New Roman", serif;
+  font-size: 30px; line-height: 0.96; letter-spacing: 1px;
+  color: var(--orange2);
+  text-shadow: 0 2px 0 #6a2a06, 0 0 22px rgba(255,138,30,0.5);
+}
+.title-block h1 span { color: #fff; }
+.title-block .sub { margin: 6px 0 0; color: var(--muted); font-size: 13px; letter-spacing: 0.5px; }
+
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field-head label { font-size: 13px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
+.bet-row { display: flex; gap: 8px; }
+.bet-row input {
+  flex: 1; text-align: center; font-weight: 800; font-size: 18px;
+  background: #120a1e; color: var(--ink);
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+}
+.mini-btn {
+  background: #2a1840; color: var(--ink); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px; font-weight: 800; cursor: pointer;
+  min-width: 46px; transition: transform .05s, background .15s;
+}
+.mini-btn:hover { background: #38205a; }
+.mini-btn:active { transform: scale(0.96); }
+.mini-btn.wide { width: 100%; }
+
+.spin-btn {
+  width: 100%; padding: 16px; border: none; border-radius: 14px; cursor: pointer;
+  font-size: 20px; font-weight: 900; letter-spacing: 2px; color: #2a1000;
+  background: linear-gradient(180deg, var(--orange2), var(--orange));
+  box-shadow: var(--glow), inset 0 1px 0 rgba(255,255,255,0.4);
+  transition: transform .06s, filter .15s;
+}
+.spin-btn:hover { filter: brightness(1.06); }
+.spin-btn:active { transform: scale(0.98); }
+.spin-btn:disabled { filter: grayscale(0.5) brightness(0.7); cursor: default; }
+.auto-btn {
+  width: 100%; margin-top: 8px; padding: 10px; border-radius: 12px; cursor: pointer;
+  font-weight: 800; color: var(--ink); background: #2a1840; border: 1px solid var(--line);
+}
+.auto-btn:hover { background: #38205a; }
+.auto-btn.on { background: linear-gradient(180deg, var(--purple), #5b27a8); color: #fff; }
+
+.fs-banner {
+  background: linear-gradient(180deg, rgba(255,138,30,0.16), rgba(138,63,240,0.16));
+  border: 1px solid rgba(255,138,30,0.4); border-radius: 12px; padding: 12px;
+  text-align: center;
+}
+.fs-line { font-size: 15px; margin: 2px 0; }
+.fs-line.small { font-size: 13px; color: var(--muted); }
+.fs-line b { color: var(--orange2); }
+
+.panel-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.lastwin { font-size: 13px; color: var(--muted); }
+.lastwin b { color: var(--ink); }
+.icon-row { display: flex; gap: 6px; }
+.icon-btn {
+  background: #2a1840; color: var(--ink); border: 1px solid var(--line);
+  border-radius: 10px; width: 38px; height: 38px; cursor: pointer; font-size: 15px;
+}
+.icon-btn:hover { background: #38205a; }
+.icon-btn.off { opacity: 0.45; }
+.status { margin: 0; font-size: 12px; color: var(--muted); min-height: 16px; }
+
+/* ---- stage ------------------------------------------------------------ */
+.stage { position: relative; border-radius: 14px; overflow: hidden; background: #0a0512; }
+#game { display: block; width: 100%; height: auto; }
+.overlay {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.banner {
+  font-family: Georgia, serif; font-weight: 900; text-align: center;
+  padding: 22px 40px; border-radius: 18px;
+  background: radial-gradient(circle, rgba(40,16,60,0.92), rgba(20,8,30,0.86));
+  border: 2px solid var(--orange); box-shadow: var(--glow);
+  animation: pop .35s ease-out;
+}
+.banner .big { font-size: 40px; color: var(--orange2); text-shadow: 0 0 20px rgba(255,138,30,0.7); }
+.banner .small { font-size: 18px; color: var(--ink); margin-top: 6px; }
+@keyframes pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ---- footer ----------------------------------------------------------- */
+.game-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 14px; padding: 12px 6px 4px; border-top: 1px solid var(--line);
+  font-size: 12px; color: var(--muted);
+}
+.pub-logo {
+  font-weight: 900; font-size: 11px; line-height: 1.1; text-align: center;
+  border: 1px dashed rgba(255,255,255,0.25); border-radius: 8px; padding: 8px 12px; color: var(--muted);
+}
+.footer-mid { text-align: center; }
+.footer-mid b { display: block; color: var(--orange2); letter-spacing: 1px; }
+.footer-right { text-align: right; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+
+/* ---- modal ------------------------------------------------------------ */
+.modal {
+  position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+  background: rgba(4,2,8,0.72); z-index: 50; padding: 18px;
+}
+.modal.open { display: flex; }
+.modal-card {
+  background: linear-gradient(180deg, var(--panel2), var(--panel));
+  border: 1px solid var(--line); border-radius: 16px; padding: 18px; max-width: 560px; width: 100%;
+}
+.modal-card.wide { max-width: 640px; }
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.modal-head h2 { margin: 0; color: var(--orange2); }
+.info-scroll { max-height: 70vh; overflow: auto; }
+.info-scroll h3 { color: var(--orange2); margin: 16px 0 8px; }
+.info-scroll ul { padding-left: 18px; line-height: 1.5; }
+.info-scroll li { margin-bottom: 6px; }
+
+#paytableGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pt-row {
+  display: flex; align-items: center; gap: 10px;
+  background: #160c26; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px;
+}
+.pt-row canvas { width: 38px; height: 38px; }
+.pt-name { font-weight: 700; flex: 1; }
+.pt-pays { font-variant-numeric: tabular-nums; color: var(--orange2); font-weight: 700; font-size: 13px; }
+
+/* ---- responsive ------------------------------------------------------- */
+@media (max-width: 860px) {
+  .game-shell { grid-template-columns: 1fr; }
+  #paytableGrid { grid-template-columns: 1fr; }
+}
