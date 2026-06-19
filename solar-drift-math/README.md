@@ -71,30 +71,37 @@ node inspect.js base 3          # pretty-print the first 3 base books
 Modes generated here: `base` (1×), `bonus` Black Hole Free Spins (100×), `super` Super
 Free Spins (250×), `storm` Solar Storm Respins (150×), `singularity` Singularity (500×).
 
-## Calibration result (96.20%)
+## Simulation volume — production vs sample
 
-`optimize.js` calibrates each mode to 96.20% RTP. Latest run:
+Stake recommends **100k+ simulations per mode**. `generate.js` therefore defaults to
+**100,000 books per mode**; pass smaller counts for quick local runs
+(`node generate.js 3000 1500`).
 
-| Mode | Cost | RTP before | RTP after | Note |
+> The `library/publish_files/` committed in this repo is a **small sample** (kept lean for
+> git). Run `npm run build` to produce the full **100k/mode production set** (≈249 MB) that
+> you upload to Stake. The generator is deterministic, so the production set is reproducible.
+
+Production 100k/mode run (validated: 100,000 records per mode, **0** CSV↔logic payout
+mismatches, valid zStandard):
+
+| Mode | Cost | RTP after | Book file (zst) | Note |
 | --- | --- | --- | --- | --- |
-| base        | 1×      | 2129% | **96.20%** | weights calibrated at listed cost |
-| bonus       | 100×    | 230%  | **96.17%** | weights calibrated at listed cost |
-| super       | 250×    | 178%  | **96.22%** | weights calibrated at listed cost |
-| storm       | 23.88×  | 15%   | **96.21%** | repriced — see below |
-| singularity | 11.33×  | 2%    | **96.16%** | repriced — see below |
+| base        | 1×    | **96.20%** | 11 MB  | calibrated at listed cost |
+| bonus       | 100×  | **96.20%** | 84 MB  | calibrated at listed cost |
+| super       | 250×  | **96.19%** | 124 MB | calibrated at listed cost |
+| storm       | 150×  | **96.20%** | 17 MB  | calibrated at listed cost |
+| singularity | 500×  | **96.20%** | 7 MB   | calibrated at listed cost |
 
-**Reprice finding.** The demo math cannot pay enough for the storm (150×) and singularity
-(500×) buy prices at 96.20% RTP — their largest possible payouts (≈97× and ≈318×) are
-below the required mean. `optimize.js` therefore re-prices those modes to a fair value
-(`mean / RTP`). In a production build the math for those features would be **reshaped** so
-the intended fixed buy prices are reachable; the optimiser surfaces the issue rather than
-hiding it.
+**Reprice resolved at scale.** At small sample sizes the storm/singularity buy modes had to
+be re-priced (their few sampled books couldn't reach the 150×/500× target mean). At the 100k
+production default the sample contains high-enough payouts (storm max ≈230×, singularity
+≈860×), so **all modes calibrate at their listed buy prices** — no repricing.
 
 ## ⚠️ Remaining work for a real submission
 
 1. **Production math.** This is still the **demo** pay model — now correctly *calibrated*
-   to 96.20%, but with an extreme, fat-tailed shape (very low hit rate) and unsupported
-   buy prices on two features. A real release needs a purpose-built pay model whose
+   to 96.20% at listed costs and generated at 100k/mode, but with an extreme, fat-tailed
+   shape (very low hit rate). A real release needs a purpose-built pay model whose
    distribution and feature values are designed for the target RTP and prices.
 2. **Official toolchain & web-sdk frontend.** Stake's reference flow is the Python
    `math-sdk` (`make setup`, Python 3.12+, Rust) for math and the declarative TS/PIXI

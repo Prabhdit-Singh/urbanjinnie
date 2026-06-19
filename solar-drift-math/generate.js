@@ -25,8 +25,10 @@ const zlib = require("node:zlib");
 const Engine = require("./engine.js");
 const Config = require("./config.js");
 
-const BASE_COUNT = Math.max(1, parseInt(process.argv[2], 10) || 20000);
-const BONUS_COUNT = Math.max(1, parseInt(process.argv[3], 10) || 3000);
+// Production default: Stake recommends 100k+ simulations per mode for outcome
+// diversity. Override with CLI args for smaller/faster local runs.
+const BASE_COUNT = Math.max(1, parseInt(process.argv[2], 10) || 100000);
+const BONUS_COUNT = Math.max(1, parseInt(process.argv[3], 10) || 100000);
 
 const OUT = path.join(__dirname, "library", "publish_files");
 fs.rmSync(path.join(__dirname, "library"), { recursive: true, force: true });
@@ -143,22 +145,26 @@ const indexModes = [];
 console.log("Generating Stake Engine publication files...");
 for (const m of MODES) {
   const rng = Engine.createRNG(0x50127 ^ hash(m.name)); // deterministic per mode
-  const bookLines = [];
   const lookupRows = ["id,weight,payoutMultiplier"];
   let weightedPayout = 0;
   let maxPayout = 0;
+  const booksName = `books_${m.name}.jsonl.zst`;
+  const weightsName = `lookUpTable_${m.name}_0.csv`;
+  // Stream book lines to a temp .jsonl on disk (a single JS string of all books
+  // overflows V8's max string length at high simulation counts), then compress.
+  const tmpPath = path.join(OUT, `books_${m.name}.jsonl.tmp`);
+  const fd = fs.openSync(tmpPath, "w");
   for (let i = 1; i <= m.count; i++) {
     const r = playRound(rng, m.name);
-    bookLines.push(JSON.stringify({ id: i, payoutMultiplier: r.payout, events: r.events }));
+    fs.writeSync(fd, JSON.stringify({ id: i, payoutMultiplier: r.payout, events: r.events }) + "\n");
     lookupRows.push(`${i},1,${r.payout}`);
     weightedPayout += r.payout;
     if (r.payout > maxPayout) maxPayout = r.payout;
   }
-  const booksName = `books_${m.name}.jsonl.zst`;
-  const weightsName = `lookUpTable_${m.name}_0.csv`;
-  const jsonl = bookLines.join("\n") + "\n";
-  const compressed = zlib.zstdCompressSync(Buffer.from(jsonl, "utf8"));
+  fs.closeSync(fd);
+  const compressed = zlib.zstdCompressSync(fs.readFileSync(tmpPath)); // Buffer has no 512MB limit
   fs.writeFileSync(path.join(OUT, booksName), compressed);
+  fs.unlinkSync(tmpPath);
   fs.writeFileSync(path.join(OUT, weightsName), lookupRows.join("\n") + "\n");
 
   const rtp = weightedPayout / m.count;       // average payout (x bet)
