@@ -3,8 +3,11 @@
 A high-volatility **7×7 cluster-pays tumble slot** demo with sticky doubling
 multiplier spots (up to **×1024**), free spins, Double Chance ante, Bonus Buy /
 Super Bonus Buy, and a **25,000× max win** — wrapped in a dark casino-style
-shell. Built with zero dependencies and zero binary assets: all symbol art is
-drawn procedurally on canvas and all audio is synthesized with WebAudio.
+shell. Zero runtime dependencies. Symbols are real baked bitmap sprites
+(`assets/symbols/*.png`, 256px) produced by an in-repo multi-pass candy
+pipeline (cast shadow, layered gradients, inner occlusion, subsurface bounce
+light, dual speculars, contour + rim line, facets/stripes/sprinkles) — swap
+any PNG for your own art without touching code. Audio is WebAudio-synthesized.
 
 > **Original game.** Mechanics belong to the well-known "tumble + multiplier
 > spots" genre, but the name, theme, symbols, artwork, sounds and code are all
@@ -41,15 +44,24 @@ The codebase deliberately mirrors the separation that
 [math-sdk](https://stakeengine.github.io/math-sdk/) and web-sdk:
 
 ```
-js/config.js    math configuration (paytable, weights, bet modes, caps)
-js/engine.js    math engine — produces a complete, ordered EVENT BOOK per
-                round; deterministic via seedable RNG; runs in Node + browser
-js/renderer.js  playback only: animates the book, never computes outcomes
-js/ui.js        casino shell: wallet, bet panel, autoplay, modals
-js/symbols.js   procedural symbol sprites (cached canvas art)
-js/audio.js     WebAudio-synthesized SFX
-tools/          math verification (run with Node)
+js/config.js      math configuration (paytable, weights, bet modes, caps)
+js/engine.js      math engine — produces a complete, ordered EVENT BOOK per
+                  round; deterministic via seedable RNG; runs in Node + browser
+js/renderer.js    playback only: animates the book, never computes outcomes
+js/ui.js          casino shell: wallet, bet panel, autoplay, modals
+js/symbols.js     sprite factory + PNG asset loader (procedural fallback)
+js/audio.js       WebAudio-synthesized SFX
+assets/symbols/   baked 256px PNG sprites (replace with your own art)
+tools/            math verification + sprite exporter (run with Node)
 ```
+
+Animation system (renderer v2): gravity-driven falls with squash-and-stretch
+spring landings and motion-stretch, scatter **anticipation** (columns slow
+with a golden spotlight + audio riser once two scatters have landed), win
+choreography (celebrate wobble → shockwave ring → shard/spark burst), screen
+shake scaled to cluster size, multiplier badge pop-ins with gold sparks,
+candy-shower big-win splashes with rotating light rays, and a living
+background (drifting clouds, bokeh, floating candies, idle symbol bobbing).
 
 Policy-relevant properties:
 

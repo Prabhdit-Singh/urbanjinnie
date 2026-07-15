@@ -56,8 +56,8 @@ sfx.enabled = false;
 var renderer = new globalThis.Renderer(document.getElementById('game'), sfx);
 
 // Make all animation primitives instant so books replay fast
+renderer.instant = true;   // physics falls complete immediately
 renderer.wait = function () { return Promise.resolve(); };
-renderer.tween = function (obj, prop, to) { obj[prop] = to; return Promise.resolve(); };
 renderer.bigWinSplash = function () { return Promise.resolve(); };
 
 var modes = ['base', 'base', 'ante', 'buy', 'superbuy'];

@@ -110,6 +110,13 @@
 
   P.tick = function () { this.tone({ type: 'square', freq: 1500, dur: 0.03, vol: 0.05 }); };
 
+  /* scatter anticipation riser: rising gliss + filtered noise sweep */
+  P.riser = function () {
+    this.tone({ type: 'sawtooth', freq: 180, slide: 720, dur: 1.4, vol: 0.14 });
+    this.tone({ type: 'sine', freq: 360, slide: 1440, dur: 1.4, vol: 0.1 });
+    this.noise({ freq: 400, slide: 3200, dur: 1.4, vol: 0.1 });
+  };
+
   P.maxWin = function () {
     for (var i = 0; i < 10; i++)
       this.tone({ type: 'triangle', freq: 523.25 * Math.pow(2, (i % 5) / 5), dur: 0.25, vol: 0.2, delay: i * 0.08 });

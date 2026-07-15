@@ -222,6 +222,23 @@ html, body {
 .buy-btn:hover:not(:disabled) { filter: brightness(1.06); }
 .buy-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
+/* shimmer sweep across the gold buy button */
+.buy-btn { position: relative; overflow: hidden; }
+.buy-btn::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 40%;
+  left: -60%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: shimmer 2.8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 55% { left: -60%; }
+  85%, 100% { left: 130%; }
+}
+
 .spin-btn {
   width: 100%;
   border: 0;
@@ -236,8 +253,8 @@ html, body {
   transition: transform 0.05s;
 }
 
-.spin-btn:hover:not(:disabled) { filter: brightness(1.08); }
-.spin-btn:active:not(:disabled) { transform: translateY(1px); }
+.spin-btn:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 3px 0 var(--green-dark); }
+.spin-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 1px 0 var(--green-dark); }
 .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .spin-btn.stop { background: #ff4d4d; box-shadow: 0 2px 0 #b32424; color: #fff; }
 .spin-btn.gold { background: linear-gradient(180deg, #ffe9a8, var(--gold) 55%, #e08a00); color: #4d2c00; box-shadow: 0 2px 0 #9a5f00; }
@@ -333,7 +350,7 @@ html, body {
   padding: 16px;
 }
 
-.modal.open { display: flex; }
+.modal.open { display: flex; animation: modalFade 0.18s ease-out; }
 
 .modal-card {
   background: var(--panel);
@@ -346,6 +363,11 @@ html, body {
   padding: 16px;
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.6);
 }
+
+.modal.open .modal-card { animation: modalPop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+@keyframes modalFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalPop { from { transform: scale(0.92) translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
 
 .modal-card.wide { width: min(760px, 100%); }
 
