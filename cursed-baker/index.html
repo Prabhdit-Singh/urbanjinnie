@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cursed Baker — Main Gameplay</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="game-viewport" id="gameViewport">
+
+  <img class="bg-layer" src="assets/images/background/gameplay_background.png" alt="">
+  <canvas class="bg-particles" id="bgParticles"></canvas>
+
+  <img class="logo" src="assets/images/logo/cursed_baker_logo.png" alt="Cursed Baker">
+
+  <div class="fs-counter" id="fsCounter">
+    <img src="assets/images/ui/free_spins_counter_panel.png" alt="Free Spins">
+    <span class="fs-counter__value" id="fsCounterValue">1</span>
+  </div>
+
+  <div class="center-stack">
+    <div class="multiplier-panel">
+      <img src="assets/images/multipliers/cursed_oven_multiplier_panel.png" alt="Cursed Oven Multiplier: x2 x3 x5 x10 x25 x50 x100 x250 x500">
+    </div>
+
+    <div class="reel-stage">
+      <div class="reel-masked" id="reelMasked">
+        <div class="reel-grid" id="reelGrid"></div>
+      </div>
+      <img class="reel-frame" src="assets/images/frames/reel_frame_5x4.png" alt="">
+    </div>
+  </div>
+
+  <div class="hud-bar">
+    <div class="hud-group hud-group--left">
+      <button class="icon-btn" id="btnSettings" aria-label="Menu">
+        <img src="assets/images/ui/settings_icon_button.png" alt="Menu">
+      </button>
+      <button class="icon-btn" id="btnHistory" aria-label="History">
+        <img src="assets/images/ui/history_icon_button.png" alt="History">
+      </button>
+    </div>
+
+    <div class="hud-group hud-group--center" id="hudCenter">
+      <!-- Balance / Bet / Win panels pending production art -->
+    </div>
+
+    <div class="hud-group hud-group--right">
+      <button class="pill-btn" id="btnAutoPlay" aria-label="Auto Play">
+        <img src="assets/images/buttons/auto_play_button.png" alt="Auto Play">
+      </button>
+      <button class="pill-btn" id="btnRapidSpin" aria-label="Rapid Spin">
+        <img src="assets/images/buttons/rapid_spin_button.png" alt="Rapid Spin">
+      </button>
+      <button class="icon-btn" id="btnInfo" aria-label="Info">
+        <img src="assets/images/ui/paytable_icon_button.png" alt="Info">
+      </button>
+      <button class="spin-btn" id="btnSpin" aria-label="Spin">
+        <img class="spin-btn__idle" src="assets/images/buttons/spin_button.png" alt="Spin">
+        <img class="spin-btn__pressed" src="assets/images/buttons/spin_button_pressed.png" alt="">
+      </button>
+    </div>
+  </div>
+
+  <button class="buy-bonus-btn" id="btnBuyBonus" aria-label="Buy Bonus">
+    <img src="assets/images/buttons/buy_bonus_button.png" alt="Buy Bonus">
+  </button>
+
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/reels.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
