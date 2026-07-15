@@ -3,6 +3,49 @@
    All visuals below reference real production art in assets/images/.
    ========================================================================== */
 
+/* Locked typography system (self-hosted, SIL OFL):
+   - Creepster      -> logo-style / big win callouts (BIG WIN, MEGA WIN, FREE SPINS, BONUS BUY, MAX WIN)
+   - UnifrakturCook -> gothic feature titles (paytable headings, feature names, story text)
+   - Cinzel         -> clean UI font (Balance, Bet, Win, History, Settings, Menu, info panels)
+   - Metal Mania    -> numbers / multipliers (x2..x500, win amounts)               */
+
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(../assets/fonts/Cinzel-Regular.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'Creepster';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(../assets/fonts/Creepster-Regular.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'UnifrakturCook';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(../assets/fonts/UnifrakturCook-Bold.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'Metal Mania';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(../assets/fonts/MetalMania-Regular.woff2) format('woff2');
+}
+
+.font-logo     { font-family: 'Creepster', Georgia, serif; }
+.font-gothic   { font-family: 'UnifrakturCook', Georgia, serif; }
+.font-ui       { font-family: 'Cinzel', Georgia, serif; }
+.font-multiplier { font-family: 'Metal Mania', Georgia, serif; }
+
 :root {
   --hud-height: clamp(64px, 11vh, 112px);
   --gold: #caa552;
@@ -18,7 +61,7 @@ html, body {
   height: 100%;
   background: #05010a;
   overflow: hidden;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
 }
 
 img { -webkit-user-drag: none; user-select: none; }
@@ -114,6 +157,8 @@ button {
   top: 50%;
   left: 63%;
   transform: translate(-50%, -50%);
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
   font-size: clamp(0.9rem, 2vmin, 1.3rem);
   font-weight: bold;
   color: #f4dfa0;
