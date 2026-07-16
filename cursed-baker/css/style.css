@@ -315,10 +315,69 @@ button {
   display: flex;
   align-items: center;
   gap: clamp(8px, 1.6vw, 20px);
-  height: 100%;
 }
 
-.hud-group--center { flex: 1; }
+.hud-group--center { flex: 1; justify-content: center; }
+
+.stat-panel {
+  position: relative;
+  height: clamp(46px, 8.5vmin, 96px);
+  aspect-ratio: 1536 / 1024;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.5));
+}
+
+.stat-panel img { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+.stat-panel__label {
+  position: absolute;
+  left: 50%;
+  top: 41%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(0.5rem, 1.3vmin, 0.72rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c9a6ea;
+  text-shadow: 0 0 6px rgba(150, 80, 220, 0.7), 0 1px 2px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+}
+
+.stat-panel__value {
+  position: absolute;
+  left: 50%;
+  top: 57%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(0.72rem, 2vmin, 1.15rem);
+  font-weight: 700;
+  color: #f4dfa0;
+  text-shadow: 0 0 8px rgba(255, 200, 80, 0.75), 0 1px 3px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.bet-btn {
+  position: absolute;
+  top: 48%;
+  width: 17%;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.85rem, 2.4vmin, 1.4rem);
+  font-weight: 700;
+  line-height: 1;
+  color: #f4dfa0;
+  text-shadow: 0 0 8px rgba(255, 200, 80, 0.85);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.bet-btn--minus { left: 12.9%; }
+.bet-btn--plus  { left: 87%; }
+
+.bet-btn:hover { color: #fff2c8; transform: translate(-50%, -50%) scale(1.15); }
+.bet-btn:active { transform: translate(-50%, -50%) scale(0.9); }
+.bet-btn:disabled { color: #6a5a4a; text-shadow: none; cursor: default; transform: translate(-50%, -50%); }
 
 .icon-btn {
   width: clamp(40px, 6.4vmin, 68px);
@@ -409,12 +468,14 @@ button {
 /* ---------------------------------------------------------------------- */
 
 @media (max-aspect-ratio: 1/1) {
+  :root { --buy-bonus-h: clamp(50px, 13.4vmin, 90px); }
   .center-stack {
     padding-top: clamp(80px, 16vmin, 160px);
     gap: clamp(10px, 2.4vmin, 26px);
+    padding-bottom: calc(var(--hud-height) + var(--buy-bonus-h) + clamp(24px, 10vmin, 80px));
   }
-  .multiplier-panel { width: clamp(260px, 82vmin, 640px); }
-  .reel-stage { width: clamp(280px, 84vmin, 640px); }
+  .multiplier-panel { width: clamp(260px, min(78vw, 56vh), 640px); }
+  .reel-stage { width: clamp(280px, min(80vw, 46vh), 640px); }
   .buy-bonus-btn {
     right: 50%;
     transform: translateX(50%);
@@ -423,16 +484,26 @@ button {
   }
   .buy-bonus-btn:hover { transform: translateX(50%) translateY(-2px) scale(1.03); }
   .buy-bonus-btn:active { transform: translateX(50%) scale(0.96); }
-  .hud-group--center { flex: 0 0 0; }
+
+  :root { --hud-height: clamp(136px, 24vmin, 210px); }
+  .hud-bar { flex-wrap: wrap; align-content: space-between; padding-top: 4px; padding-bottom: 4px; }
+  .hud-group--center {
+    flex: 0 0 100%;
+    order: -1;
+    gap: clamp(10px, 3vmin, 24px);
+    padding-bottom: 2px;
+  }
+  .hud-group--left, .hud-group--right { flex: 0 0 auto; }
 }
 
 @media (max-width: 480px) {
   .hud-bar { padding: 0 6px; }
   .hud-group { gap: 4px; }
+  .hud-group--center { gap: 8px; }
   .icon-btn { width: clamp(30px, 8vw, 44px); height: clamp(30px, 8vw, 44px); }
   .pill-btn { height: clamp(24px, 6.4vw, 36px); }
   .spin-btn { width: clamp(54px, 15vw, 84px); height: clamp(54px, 15vw, 84px); }
-  .hud-group--center { flex: 0 0 auto; width: 0; }
+  .stat-panel { height: clamp(40px, 11vw, 60px); }
 }
 
 /* ---------------------------------------------------------------------- */

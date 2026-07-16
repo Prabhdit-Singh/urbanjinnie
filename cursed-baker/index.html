@@ -43,7 +43,20 @@
     </div>
 
     <div class="hud-group hud-group--center" id="hudCenter">
-      <!-- Balance / Bet / Win panels pending production art -->
+      <div class="stat-panel balance-panel">
+        <img src="assets/images/ui/balance_panel.png" alt="">
+        <div class="stat-panel__label font-ui">Balance</div>
+        <div class="stat-panel__value font-ui" id="balanceValue">$1,000.00</div>
+      </div>
+
+      <div class="stat-panel bet-panel">
+        <img src="assets/images/ui/bet_panel.png" alt="">
+        <button class="bet-btn bet-btn--minus font-ui" id="betMinus" aria-label="Decrease Bet">&minus;</button>
+        <div class="stat-panel__label font-ui">Bet</div>
+        <div class="stat-panel__value font-ui" id="betValue">1.00</div>
+        <button class="bet-btn bet-btn--plus font-ui" id="betPlus" aria-label="Increase Bet">+</button>
+      </div>
+      <!-- Win panel pending production art -->
     </div>
 
     <div class="hud-group hud-group--right">

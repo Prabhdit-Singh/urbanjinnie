@@ -37,6 +37,10 @@ const INITIAL_GRID = [
   'low_j',      'prem_baker', 'low_a',      'low_10',     'prem_cake',
 ];
 
+const BET_STEPS = [0.20, 0.40, 0.60, 1.00, 2.00, 5.00, 10.00, 20.00, 50.00, 100.00];
+const STARTING_BALANCE = 1000.00;
+const DEFAULT_BET_INDEX = 3; // 1.00
+
 // Pool used for the demo spin (base-game weighting: mostly low/premium, rare feature symbols).
 const SPIN_POOL = [
   'low_10','low_10','low_10','low_j','low_j','low_j','low_q','low_q','low_q','low_k','low_k','low_a','low_a',
