@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Limbo — Demo</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- top bar -->
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">▲</span> DEMO CASINO</div>
+      <div class="topbar-right">
+        <a class="other-demo" href="../index.html">Candy Surge 1000 →</a>
+        <div class="balance-pill">
+          <span class="balance-label">Balance</span>
+          <span id="balance">$0.00</span>
+          <button id="btnReset" class="icon-btn" title="Reset demo balance">↺</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- game card -->
+    <main class="game-card">
+      <div class="game-shell">
+        <!-- bet panel -->
+        <aside class="panel">
+          <div class="tabs">
+            <button id="tabManual" class="tab active">Manual</button>
+            <button id="tabAuto" class="tab">Auto</button>
+          </div>
+
+          <div class="field">
+            <div class="field-head">
+              <label for="betInput">Bet Amount</label>
+            </div>
+            <div class="bet-row">
+              <input id="betInput" type="number" step="0.01" min="0.10" max="100" value="1.00">
+              <button id="betHalf" class="mini-btn">½</button>
+              <button id="betDouble" class="mini-btn">2×</button>
+            </div>
+            <div class="bet-row minmax">
+              <button id="betMin" class="mini-btn wide">Min</button>
+              <button id="betMax" class="mini-btn wide">Max</button>
+            </div>
+          </div>
+
+          <div class="field two-col">
+            <div class="col">
+              <div class="field-head"><label for="targetInput">Target Multiplier</label></div>
+              <input id="targetInput" type="number" step="0.01" min="1.01" value="2.00">
+            </div>
+            <div class="col">
+              <div class="field-head"><label for="chanceInput">Win Chance</label></div>
+              <div class="unit-input"><input id="chanceInput" type="number" step="0.01" min="0.0001" max="98" value="49.5"><span>%</span></div>
+            </div>
+          </div>
+
+          <div class="bet-row quick-targets" id="quickTargets"></div>
+
+          <div class="field payout-field">
+            <span>Payout on win</span>
+            <b id="payoutOut">$2.00</b>
+          </div>
+
+          <div id="manualPane">
+            <button id="btnBet" class="spin-btn">Bet</button>
+          </div>
+
+          <div id="autoPane" style="display:none">
+            <div class="field">
+              <div class="field-head"><label>Number of Bets</label></div>
+              <div class="auto-row">
+                <button class="mini-btn" data-auto="10">10</button>
+                <button class="mini-btn active" data-auto="25">25</button>
+                <button class="mini-btn" data-auto="50">50</button>
+                <button class="mini-btn" data-auto="100">100</button>
+                <button class="mini-btn" data-auto="inf">∞</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-head"><label>On Win</label></div>
+              <div class="seg-row">
+                <button type="button" class="seg-btn active" data-onwin="reset">Reset</button>
+                <button type="button" class="seg-btn" data-onwin="increase">Increase by</button>
+                <input id="onWinPct" type="number" min="0" max="1000" step="1" value="0" disabled>
+                <span class="seg-suffix">%</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-head"><label>On Loss</label></div>
+              <div class="seg-row">
+                <button type="button" class="seg-btn active" data-onloss="reset">Reset</button>
+                <button type="button" class="seg-btn" data-onloss="increase">Increase by</button>
+                <input id="onLossPct" type="number" min="0" max="1000" step="1" value="0" disabled>
+                <span class="seg-suffix">%</span>
+              </div>
+            </div>
+
+            <div class="field two-col">
+              <div class="col">
+                <div class="field-head"><label for="stopProfit">Stop on Profit ≥</label></div>
+                <input id="stopProfit" type="number" min="0" step="0.01" placeholder="0.00">
+              </div>
+              <div class="col">
+                <div class="field-head"><label for="stopLoss">Stop on Loss ≥</label></div>
+                <input id="stopLoss" type="number" min="0" step="0.01" placeholder="0.00">
+              </div>
+            </div>
+
+            <button id="btnAutoStart" class="spin-btn">Start Autoplay</button>
+          </div>
+
+          <div class="panel-foot">
+            <div class="lastwin">Last win <b id="lastWin">—</b></div>
+            <div class="icon-row">
+              <button id="btnTurbo" class="icon-btn" title="Turbo">⚡</button>
+              <button id="btnSound" class="icon-btn" title="Sound">🔊</button>
+              <button id="btnFair" class="icon-btn" title="Provably fair">🔒</button>
+              <button id="btnInfo" class="icon-btn" title="Rules">ⓘ</button>
+            </div>
+          </div>
+          <p id="statusLine" class="status">Loading…</p>
+        </aside>
+
+        <!-- game stage -->
+        <section class="stage">
+          <canvas id="game"></canvas>
+        </section>
+      </div>
+
+      <!-- game footer -->
+      <footer class="game-footer">
+        <div class="pub-logo" title="Publisher logo placeholder">PUBLISHER<br>LOGO</div>
+        <div class="footer-mid">
+          <b>APEX LIMBO</b>
+          <span>RTP 99% · House edge 1% · Target 1.01×–1,000,000×</span>
+        </div>
+        <div class="footer-right">
+          <span>Demo build · No real money</span>
+          <span class="muted">Provably fair (HMAC-SHA256)</span>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- provably fair modal -->
+  <div id="fairModal" class="modal">
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <h2>Provably Fair</h2>
+        <button id="fairClose" class="icon-btn">✕</button>
+      </div>
+      <div class="info-scroll">
+        <p class="muted">
+          Every result is derived from <code>HMAC-SHA256(serverSeed, clientSeed:nonce)</code>.
+          The server seed's hash is published <b>before</b> you bet against it, so it can't be
+          changed after the fact; rotating it reveals the seed so every past bet can be
+          independently recomputed and checked against its committed hash.
+        </p>
+
+        <div class="fair-grid">
+          <label>Active server seed (hashed)</label>
+          <input id="fairServerHash" type="text" readonly>
+
+          <label>Client seed</label>
+          <div class="unit-input wide"><input id="fairClientSeed" type="text"><button id="fairNewClient" class="mini-btn">🎲</button></div>
+
+          <label>Next nonce</label>
+          <input id="fairNonce" type="text" readonly>
+        </div>
+
+        <button id="fairRotate" class="mini-btn wide">Rotate Server Seed (reveals current seed)</button>
+        <div id="fairRevealed" class="fair-revealed" style="display:none">
+          <b>Revealed seed:</b> <span id="fairRevealedSeed"></span>
+          <p class="muted small">Anyone can now recompute every bet placed under it with the formula above and match it to the hash shown at the time.</p>
+        </div>
+
+        <h3>Verify a result</h3>
+        <div class="fair-grid">
+          <label>Server seed</label>
+          <input id="verifyServer" type="text" placeholder="paste a revealed server seed">
+          <label>Client seed</label>
+          <input id="verifyClient" type="text">
+          <label>Nonce</label>
+          <input id="verifyNonce" type="number" value="0" min="0">
+        </div>
+        <button id="verifyRun" class="mini-btn wide">Compute result</button>
+        <div id="verifyOut" class="fair-revealed" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- info / rules modal -->
+  <div id="infoModal" class="modal">
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <h2>Game Info</h2>
+        <button id="infoClose" class="icon-btn">✕</button>
+      </div>
+      <div class="info-scroll">
+        <h3>How to play</h3>
+        <ul>
+          <li>Pick a <b>Target Multiplier</b> (or set a <b>Win Chance %</b> — they're linked) and place your bet.</li>
+          <li>A provably-fair result multiplier is generated. If it's <b>≥ your target</b>, you win <b>bet × target</b>. Otherwise you lose the bet.</li>
+          <li><b>Win Chance</b> = 99% ÷ target. Lower targets win more often for a smaller payout; higher targets pay big but hit rarely — same expected return either way.</li>
+          <li><b>Autoplay</b> can adjust your bet after each win/loss by a percentage, and stop automatically once a profit or loss threshold is reached.</li>
+        </ul>
+        <h3>Math</h3>
+        <p class="muted">
+          House edge <b>1%</b> → target RTP <b>99%</b> at every target multiplier (verified by
+          <code>tools/simulate.js</code> across thousands of random targets). Result multiplier is
+          floored to 2 decimal places and floored at 1.00× (an instant win at the lowest possible
+          target); the maximum target/result is 1,000,000×.
+        </p>
+        <h3>Fairness</h3>
+        <p class="muted">See the 🔒 Provably Fair panel — results use real HMAC-SHA256, not a cosmetic placeholder.</p>
+        <p class="muted small">Demo entertainment build — no real-money play, no RGS connection.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/sha256.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

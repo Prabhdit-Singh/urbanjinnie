@@ -1,3 +1,16 @@
+# Demo casino games
+
+Two original, zero-dependency casino-style demos live in this repo:
+
+- **[Candy Surge 1000](index.html)** — a 7×7 cluster-pays tumble slot (below)
+- **[Apex Limbo](limbo/index.html)** — a provably-fair target-multiplier game ([details](limbo/README.md))
+
+Both are original games (own name, art, math and code) built for the same
+demo/education purpose — neither is a copy of, or affiliated with, any
+specific commercial casino's game.
+
+---
+
 # CANDY SURGE 1000 🍬
 
 A high-volatility **7×7 cluster-pays tumble slot** demo with sticky doubling
