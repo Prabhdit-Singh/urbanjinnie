@@ -10,7 +10,7 @@
   var CONFIG = {
     gameId: 'apex_limbo',
     gameName: 'APEX LIMBO',
-    providerName: 'YOUR STUDIO',   // publisher logo / name placeholder
+    providerName: 'Urban Games',
     version: '1.0.0',
 
     houseEdge: 0.01,               // 1% house edge -> 99% theoretical RTP at any target

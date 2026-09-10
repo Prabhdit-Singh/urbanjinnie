@@ -342,8 +342,12 @@ html, body {
   background: var(--panel-2); border-top: 1px solid var(--line); font-size: 12px;
 }
 .pub-logo {
-  flex: 0 0 auto; border: 1.5px dashed #56708a; border-radius: 6px; color: #8aa1b8;
-  font-size: 9px; font-weight: 800; letter-spacing: 0.1em; text-align: center; padding: 8px 14px; line-height: 1.4;
+  flex: 0 0 auto;
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
 }
 .footer-mid { display: flex; flex-direction: column; gap: 2px; }
 .footer-mid b { color: var(--text-strong); letter-spacing: 0.06em; }

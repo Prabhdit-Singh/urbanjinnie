@@ -13,8 +13,8 @@ reveals the game.
 > well-known casino-game genre implemented by many platforms — the name,
 > theme, art, sounds and code here are original, and this project is **not
 > affiliated with, endorsed by, or a copy of any specific commercial
-> casino's game.** A **publisher logo placeholder** is included in the
-> footer — drop your studio mark in.
+> casino's game.** The studio mark in the footer is Urban Games
+> (`assets/publisher-logo.png`).
 
 ## Run it
 
