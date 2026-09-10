@@ -59,22 +59,25 @@
         // cost = shots x bet (see UI.rushCost)
       },
 
-      // TRIPLE SHOT — "premium": three independent, simultaneous lanes at
-      // fixed targets. Config drives the targets (not the player) so the
-      // bundle can be balanced as a whole; several presets are kept here
-      // for future tuning, but only `activePreset` is exposed in the UI.
+      // TRIPLE SHOT — "premium": ONE draw, THREE escalating prize gates at
+      // startTarget x [1, 10, 100]. Crossing a gate doesn't replace the
+      // previous prize, it adds to it — payout = sum of every gate the one
+      // result cleared. Because payout(result) = sum_j gate_j * 1[result >=
+      // gate_j], linearity of expectation gives E[payout] = sum_j gate_j *
+      // P(result>=gate_j) = sum_j gate_j*(houseEdge-complement/gate_j) =
+      // 3*(1-houseEdge) -- the gate_j values cancel out completely, so RTP
+      // is EXACTLY (1-houseEdge) for every possible startTarget, no
+      // calibration needed (see tools/simulate_bonus.js for the empirical
+      // check). The player's startTarget choice is the volatility control.
       tripleShot: {
         id: 'tripleShot',
         label: 'Triple Shot',
-        tagline: 'Three simultaneous chances',
+        tagline: 'One flight, three escalating gates',
         volatility: 'High',
-        activePreset: 'balanced',
-        presets: {
-          balanced: [3, 10, 50],
-          highRisk: [5, 25, 250],
-          extreme: [10, 100, 1000]
-        }
-        // cost = sum of the active preset's lane count x bet (see UI.tripleShotCost)
+        gateRatios: [1, 10, 100],
+        startTarget: { min: 2, max: 900, default: 10, step: 0.01 },
+        startPresets: [2, 5, 10, 25, 50, 100, 250, 500, 900]
+        // cost = 3 x bet, ALWAYS (see UI.tripleShotCost) — independent of startTarget
       },
 
       // JACKPOT SHOT — "extreme": one draw. Below minWin it's a plain
@@ -104,11 +107,14 @@
   };
 
   CONFIG.rushCost = function () { return CONFIG.bonusModes.rush.shots; };
-  CONFIG.tripleShotLanes = function () {
+
+  // The three escalating gate values for a chosen starting target.
+  CONFIG.tripleShotGates = function (startTarget) {
     var m = CONFIG.bonusModes.tripleShot;
-    return m.presets[m.activePreset];
+    startTarget = Math.max(m.startTarget.min, Math.min(m.startTarget.max, startTarget));
+    return m.gateRatios.map(function (r) { return Math.round(startTarget * r * 100) / 100; });
   };
-  CONFIG.tripleShotCost = function () { return CONFIG.tripleShotLanes().length; };
+  CONFIG.tripleShotCost = function () { return CONFIG.bonusModes.tripleShot.gateRatios.length; };
 
   // Win chance (%) for a given target multiplier, and the inverse.
   CONFIG.chanceForTarget = function (target) {

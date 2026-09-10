@@ -44,10 +44,17 @@ normal bet uses — they just take more than one draw, or spend the one draw
 differently — so every shot in every bonus is independently verifiable the
 same way a normal bet is (🔒 panel / `tools/verify_fairness.js`).
 
+**Payout convention (locked):** every mode's `×` figures — Rush's per-shot
+target, Triple Shot's gates, Jackpot's MIN/MAX WIN — are multiples of the
+**base unit bet**, never of that mode's feature-buy cost. A Triple Shot
+TRIPLE HIT at `T=10×` pays `1,110 × bet`, the same bet used to compute the
+3× cost, not `1,110 × (3×bet)`. This matches how a normal bet already works
+and keeps every mode's numbers directly comparable.
+
 | Mode | Volatility | What you buy | Cost | Math |
 | --- | --- | --- | --- | --- |
 | **Rush Mode** (accessible) | Medium-High | 10 rapid-fire shots at your current Target Multiplier | 10× bet | Literally 10 independent normal bets, fired back to back — RTP-neutral by construction (99%) |
-| **Triple Shot** (premium) | High | 3 simultaneous, independent lanes at fixed targets 3× / 10× / 50× — hits add up | 3× bet | 3 independent normal bets at those targets — RTP-neutral by construction (99%) |
+| **Triple Shot** (premium) | High | 1 draw, 3 escalating prize gates at your chosen starting target × 1/10/100 | 3× bet | Payout = sum of every gate the one draw cleared — RTP-neutral by construction (99%, exactly, for any starting target) |
 | **Jackpot Shot** (extreme) | Extreme | 1 draw against a disclosed prize range — MIN WIN 25×, MAX WIN 100,000× | 9.30× bet | Below MIN WIN: miss (payout 0). At/above MIN WIN: the draw's *own value*, clamped to MAX WIN, **is** the payout — no separate prize table or wheel |
 
 **Rush Mode** reuses your Target Multiplier field directly — it's not a
@@ -55,12 +62,29 @@ separate setting. The stage reveals shots as a rapid ticker (not a wait for
 one projectile to finish before the next fires) with a live `SHOT n/10 · HITS
 h · WIN x×` readout, ending on a `RUSH COMPLETE` summary.
 
-**Triple Shot**'s three targets come from config, not the player (currently
-the "Balanced" preset — `highRisk` 5×/25×/250× and `extreme` 10×/100×/1000×
-exist in `config.js` for future tuning but aren't wired into the UI). Lanes
-resolve simultaneously side by side; a missed lane dims but the others keep
-counting. Hit counts render as **ONE HIT / DOUBLE HIT / TRIPLE HIT** —
-cosmetic labels only, the payout is always the plain sum of what hit.
+**Triple Shot** is ONE draw, not three. You pick a starting target `T`
+(2×–900×, via number input or preset buttons); the feature derives three
+gates at `T`, `10T`, `100T`. One projectile launches — how far the single
+result climbs decides how many gates it clears, and clearing a gate banks
+its own prize **on top of** any earlier one (crossing `100T` implies `10T`
+and `T` were already crossed, since the gates are strictly increasing):
+
+| Result vs. gates (T = 10×) | Payout |
+| --- | --- |
+| < 10× | 0× |
+| ≥ 10×, < 100× | 10× |
+| ≥ 100×, < 1,000× | 10× + 100× = 110× |
+| ≥ 1,000× | 10× + 100× + 1,000× = 1,110× — **TRIPLE HIT** |
+
+The elegant part: payout(result) = Σ gate × 𝟙[result ≥ gate], so by
+linearity `E[payout] = Σ gate × P(result≥gate) = Σ gate × (1−houseEdge)/gate
+= 3×(1−houseEdge)` — the gate values cancel out completely. RTP is
+**exactly** 99% at every possible starting target, provably, not just
+approximately — `startTarget` is purely a volatility dial (higher target =
+rarer, bigger cumulative payout, same expected return). Max total payout is
+`111×T`, so the target selector is capped at 900× (111 × 900 = 99,900×,
+under the game's 1,000,000× result ceiling). "TRIPLE HIT" is a cosmetic
+label on the same plain summed payout, same as the other modes' win labels.
 
 **Jackpot Shot** is the one genuinely different payout shape: because the
 underlying result distribution is already heavy-tailed (the same one every

@@ -171,10 +171,16 @@
         <div class="bonus-card premium">
           <div class="bonus-tag">Premium</div>
           <h3>TRIPLE SHOT</h3>
-          <p class="muted small">Three simultaneous chances</p>
-          <p id="tripleDesc">3 independent lanes at fixed targets — hits add up.</p>
+          <p class="muted small">One flight, three escalating gates</p>
+          <p>One draw, three gates at <b>1× / 10× / 100×</b> your starting target. Clearing a gate banks its prize <i>on top of</i> the one before it.</p>
+          <div class="field">
+            <div class="field-head"><label for="tripleStartInput">Starting Target</label></div>
+            <input id="tripleStartInput" type="number" step="0.01" min="2" max="900" value="10">
+          </div>
+          <div class="bet-row quick-targets" id="tripleStartPresets"></div>
+          <p id="tripleDesc" class="muted small">Gates: 10× / 100× / 1,000×</p>
           <div class="bonus-price" id="tripleCost">$3.00</div>
-          <div class="bonus-mult">3× bet</div>
+          <div class="bonus-mult">3× bet, always</div>
           <button id="tripleConfirm" class="spin-btn gold">Fire Triple Shot</button>
         </div>
         <div class="bonus-card extreme">
@@ -256,7 +262,7 @@
         <h3>Bonus Buy</h3>
         <ul>
           <li><b>Rush Mode</b> (accessible) — buys 10 rapid-fire shots at your current Target Multiplier. It's exactly 10 independent normal bets fired back to back; cost = 10× bet, same RTP as a normal bet.</li>
-          <li><b>Triple Shot</b> (premium) — buys 3 simultaneous, independent lanes at fixed targets (3× / 10× / 50×). Any number of lanes can hit in the same round and their payouts simply add up; cost = 3× bet.</li>
+          <li><b>Triple Shot</b> (premium) — one draw, three escalating gates at your chosen starting target × 1 / 10 / 100. Clearing a gate banks its own prize on top of any earlier one — the highest gate you clear, the more you've already banked underneath it. Your starting target (2×–900×) is the risk dial: pick it higher for a bigger, rarer payout. Cost is always 3× bet, and — because the gate values cancel out mathematically — RTP is exactly 99% for every possible starting target.</li>
           <li><b>Jackpot Shot</b> (extreme) — buys one single draw with a disclosed prize range (MIN WIN 25× – MAX WIN 100,000×). Below the minimum it's a miss; at or above it, the draw's own value (capped at the maximum) becomes the payout — no separate prize table or wheel, just one provably-fair number.</li>
           <li>All three reuse the exact same <code>HMAC-SHA256</code> draw as a normal bet — see the fairness panel to verify any bonus round the same way you'd verify a normal one.</li>
         </ul>

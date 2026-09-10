@@ -51,22 +51,35 @@ console.log('APEX LIMBO — Bonus Buy math verification\n');
   console.log('');
 })();
 
-/* ---- Triple Shot -------------------------------------------------------- */
+/* ---- Triple Shot ----------------------------------------------------------
+ * ONE draw, THREE escalating gates (startTarget x 1/10/100). Because
+ * payout(result) = sum_j gate_j * 1[result >= gate_j], linearity of
+ * expectation gives E[payout] = sum_j gate_j * P(result>=gate_j) =
+ * sum_j gate_j*(houseEdge-complement/gate_j) = 3*(1-houseEdge) EXACTLY —
+ * the gate_j values cancel out, so RTP should read ~99% at every starting
+ * target below (still Monte Carlo noise at the tails of each sweep, worse
+ * for higher starting targets since their top gate is rarer — same shape
+ * of variance as Jackpot Shot, just far less extreme). */
 (function () {
-  var eng = new Engine(seed + 2);
-  var lanes = CFG.tripleShotLanes();
   var cost = CFG.tripleShotCost();
   var totalCost = 0, totalWin = 0;
-  var hitDist = { 0: 0, 1: 0, 2: 0, 3: 0 };
-  for (var i = 0; i < rounds; i++) {
-    var res = eng.playTripleShot('bonus-sim', lanes);
-    totalCost += cost; totalWin += res.totalPayoutX;
-    hitDist[res.hits]++;
-  }
-  rtpLine('Triple Shot [' + lanes.join('x, ') + 'x]', cost, totalCost, totalWin);
-  console.log('  hit distribution: 0=%s%%  1=%s%%  2=%s%%  3=%s%% (TRIPLE HIT)',
-    (100 * hitDist[0] / rounds).toFixed(3), (100 * hitDist[1] / rounds).toFixed(3),
-    (100 * hitDist[2] / rounds).toFixed(3), (100 * hitDist[3] / rounds).toFixed(4));
+  CFG.bonusModes.tripleShot.startPresets.forEach(function (T) {
+    var eng = new Engine(seed + 2 + Math.round(T * 3));
+    var tc = 0, tw = 0;
+    var hitDist = { 0: 0, 1: 0, 2: 0, 3: 0 };
+    for (var i = 0; i < rounds; i++) {
+      var res = eng.playTripleShot('bonus-sim', T);
+      tc += cost; tw += res.totalPayoutX;
+      hitDist[res.hits]++;
+    }
+    totalCost += tc; totalWin += tw;
+    var gates = CFG.tripleShotGates(T);
+    console.log('  Triple Shot @ start %sx [gates %sx]: RTP %s%%  (hits 0/1/2/3 = %s%% / %s%% / %s%% / %s%%)',
+      T, gates.join('/'), (100 * tw / tc).toFixed(2),
+      (100 * hitDist[0] / rounds).toFixed(2), (100 * hitDist[1] / rounds).toFixed(2),
+      (100 * hitDist[2] / rounds).toFixed(3), (100 * hitDist[3] / rounds).toFixed(4));
+  });
+  rtpLine('Triple Shot (all starting targets combined)', cost, totalCost, totalWin);
   console.log('');
 })();
 

@@ -128,19 +128,21 @@
     return { mode: 'rush', shots: draws, hits: hits, totalPayoutX: totalPayoutX, serverSeedHash: this.serverSeedHash() };
   };
 
-  // TRIPLE SHOT: independent, simultaneous lanes at fixed targets. Hits
-  // add up (no combined-pay formula) — each lane wins or loses on its own.
-  P.playTripleShot = function (clientSeed, lanes) {
-    var shots = [];
-    for (var i = 0; i < lanes.length; i++) {
-      var nonce = this.nonce++;
-      var result = computeResult(this.serverSeed, clientSeed, nonce, CFG.houseEdge, CFG.target.max);
-      var win = result >= lanes[i];
-      shots.push({ lane: i, nonce: nonce, target: lanes[i], result: result, win: win, payoutX: win ? lanes[i] : 0 });
-    }
-    var hits = shots.reduce(function (n, s) { return n + (s.win ? 1 : 0); }, 0);
-    var totalPayoutX = shots.reduce(function (s, sh) { return s + sh.payoutX; }, 0);
-    return { mode: 'tripleShot', shots: shots, hits: hits, totalPayoutX: totalPayoutX, serverSeedHash: this.serverSeedHash() };
+  // TRIPLE SHOT: ONE draw, THREE escalating gates (startTarget x 1/10/100).
+  // Crossing a gate banks its own value ON TOP of any earlier gate already
+  // banked — since the gates are strictly increasing, crossing gate 3
+  // necessarily means gates 1 and 2 were also crossed by the same result.
+  P.playTripleShot = function (clientSeed, startTarget) {
+    var gates = CFG.tripleShotGates(startTarget);
+    var nonce = this.nonce++;
+    var result = computeResult(this.serverSeed, clientSeed, nonce, CFG.houseEdge, CFG.target.max);
+    var crossed = gates.map(function (g) { return result >= g; });
+    var hits = crossed.reduce(function (n, c) { return n + (c ? 1 : 0); }, 0);
+    var totalPayoutX = gates.reduce(function (sum, g, i) { return sum + (crossed[i] ? g : 0); }, 0);
+    return {
+      mode: 'tripleShot', nonce: nonce, result: result, gates: gates, crossed: crossed,
+      hits: hits, totalPayoutX: totalPayoutX, serverSeedHash: this.serverSeedHash()
+    };
   };
 
   // JACKPOT SHOT: one draw. Below minWin it's a plain miss. At/above

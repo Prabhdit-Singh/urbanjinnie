@@ -262,42 +262,55 @@
    * methods only decide how it's revealed on screen over time).
    * ========================================================================= */
 
-  /* ---- TRIPLE SHOT: three lanes counting up side by side, simultaneously */
+  /* ---- TRIPLE SHOT: ONE flight, THREE escalating gates on one track ----
+   * The result is already fixed (rec.result / rec.gates / rec.crossed all
+   * came from the engine); this only reveals it — the count-up crossing a
+   * gate in real time is what the result already determined, not a fake
+   * near-miss the renderer is manufacturing. */
   P.playTripleShot = function (rec, opts) {
     opts = opts || {};
     var self = this;
     var turbo = !!opts.turbo;
-    var maxResult = Math.max.apply(null, rec.shots.map(function (s) { return s.result; }));
-    var span = Math.log10(Math.max(maxResult, 1.01));
-    var duration = Math.max(500, Math.min(1800, 420 + span * 260)) * (turbo ? 0.45 : 1);
+    var axisMax = Math.max(rec.gates[2] * 10, rec.result * 1.05, 10);
+    var animTarget = Math.min(Math.max(rec.result, 1), axisMax);
+    var span = Math.log10(Math.max(animTarget, 1.01));
+    var duration = Math.max(900, Math.min(3200, 700 + span * 340)) * (turbo ? 0.4 : 1);
     var start = performance.now();
 
     this.bonus = {
-      mode: 'tripleShot',
-      lanes: rec.shots.map(function (s) { return { target: s.target, result: s.result, win: s.win, display: 1 }; }),
-      hitsLabel: null,
+      mode: 'tripleShot', gates: rec.gates, axisMax: axisMax,
+      display: 1, crossedNow: [false, false, false], crossFlash: [0, 0, 0],
       settled: false
     };
     this.phase = 'counting';
+    this.lastTickValue = 1;
 
     return new Promise(function (resolve) {
       function frame(now) {
         var t = Math.min(1, (now - start) / duration);
         var e = easeOutQuad(t);
-        self.bonus.lanes.forEach(function (lane) { lane.display = Math.pow(Math.max(lane.result, 1), e); });
+        var b = self.bonus;
+        b.display = Math.pow(animTarget, e);
+        rec.gates.forEach(function (g, i) {
+          if (!b.crossedNow[i] && b.display >= g) { b.crossedNow[i] = true; b.crossFlash[i] = 1; if (self.sfx) self.sfx.win(g); }
+        });
+        b.crossFlash = b.crossFlash.map(function (v) { return Math.max(0, v - 0.022); });
+        if (b.display - self.lastTickValue > 0.2 || t >= 1) {
+          self.lastTickValue = b.display;
+          if (self.sfx) self.sfx.tick(t);
+        }
         if (t < 1) {
           requestAnimationFrame(frame);
         } else {
-          self.bonus.lanes.forEach(function (lane) { lane.display = lane.result; });
-          self.bonus.settled = true;
+          b.display = rec.result;
+          b.crossedNow = rec.crossed.slice();
+          b.settled = true;
           self.phase = 'settled';
-          var hits = rec.hits;
-          self.bonus.hitsLabel = hits === 3 ? 'TRIPLE HIT' : hits === 2 ? 'DOUBLE HIT' : hits === 1 ? 'ONE HIT' : 'NO HITS';
-          self.history.unshift({ value: maxResult, win: hits > 0 });
+          self.history.unshift({ value: rec.result, win: rec.hits > 0 });
           if (self.history.length > CFG.history.size) self.history.length = CFG.history.size;
-          if (self.sfx) { if (hits > 0) self.sfx.win(rec.totalPayoutX); else self.sfx.bust(); }
-          if (hits > 0) self.burst(hits === 3);
-          setTimeout(function () { self.bonus = null; resolve(); }, turbo ? 500 : 1100);
+          if (self.sfx) { if (rec.hits > 0) self.sfx.win(rec.totalPayoutX); else self.sfx.bust(); }
+          if (rec.hits === 3) self.burst(true); else if (rec.hits > 0) self.burst(false);
+          setTimeout(function () { self.bonus = null; resolve(); }, turbo ? 500 : 1300);
         }
       }
       requestAnimationFrame(frame);
@@ -306,56 +319,75 @@
 
   P.drawTripleShot = function () {
     var ctx = this.ctx, w = this.w, h = this.h, self = this;
-    var b = this.bonus, lanes = b.lanes;
-    var colW = w / lanes.length;
-    var cy = h * 0.42;
+    var b = this.bonus, gates = b.gates;
+
+    var barX = 40, barW = w - 80, barY = h * 0.24, barH = 6;
+    var lo = 0, hi = Math.log10(b.axisMax);
+    function xFor(v) {
+      var frac = (Math.log10(Math.max(v, 1)) - lo) / (hi - lo);
+      return barX + Math.max(0, Math.min(1, frac)) * barW;
+    }
 
     ctx.textAlign = 'center';
     ctx.font = '700 12px -apple-system, Segoe UI, Roboto, sans-serif';
     ctx.fillStyle = '#7f8da0';
-    ctx.fillText('TRIPLE SHOT', w / 2, h * 0.16 - 18);
+    ctx.fillText('TRIPLE SHOT', w / 2, h * 0.1);
 
-    lanes.forEach(function (lane, i) {
-      var cx = colW * i + colW / 2;
-      var dim = b.settled && !lane.win;
-      var color = b.settled ? (lane.win ? '#00e701' : '#ff4d4d') : '#ffffff';
-      ctx.globalAlpha = dim ? 0.35 : 1;
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(barX, barY, barW, barH);
+    var fillX = xFor(b.display);
+    var trackGrad = ctx.createLinearGradient(barX, 0, Math.max(fillX, barX + 1), 0);
+    trackGrad.addColorStop(0, '#00e701');
+    trackGrad.addColorStop(1, '#ffc83d');
+    ctx.fillStyle = trackGrad;
+    ctx.fillRect(barX, barY, Math.max(0, fillX - barX), barH);
+
+    var gateLabels = ['SHOT I', 'SHOT II', 'SHOT III'];
+    gates.forEach(function (g, i) {
+      var x = xFor(g);
+      var crossed = b.crossedNow[i];
+      ctx.strokeStyle = crossed ? '#ffc83d' : 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x, barY - 6); ctx.lineTo(x, barY + barH + 6); ctx.stroke();
 
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = '700 11px -apple-system, Segoe UI, Roboto, sans-serif';
-      ctx.fillStyle = '#7f8da0';
-      ctx.fillText('SHOT ' + (i + 1) + ' · target ' + self.fmtMult(lane.target), cx, cy - 56);
+      ctx.font = '700 9px -apple-system, Segoe UI, Roboto, sans-serif';
+      ctx.fillStyle = crossed ? '#ffc83d' : '#7f8da0';
+      ctx.fillText(gateLabels[i] + ' · ' + self.fmtMult(g), x, barY - 16);
 
-      var fontSize = Math.max(20, Math.min(38, colW * 0.16));
-      ctx.font = '800 ' + fontSize + 'px -apple-system, Segoe UI, Roboto, sans-serif';
-      ctx.shadowColor = color;
-      ctx.shadowBlur = b.settled ? 16 : 6;
-      ctx.fillStyle = color;
-      ctx.fillText(self.fmtMult(lane.display), cx, cy);
-      ctx.shadowBlur = 0;
-
-      if (b.settled) {
-        ctx.font = '700 11px -apple-system, Segoe UI, Roboto, sans-serif';
-        ctx.fillStyle = color;
-        ctx.fillText(lane.win ? 'HIT' : 'MISS', cx, cy + fontSize * 0.6 + 14);
-      }
-      ctx.globalAlpha = 1;
-
-      if (i > 0) {
-        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-        ctx.beginPath();
-        ctx.moveTo(colW * i, h * 0.16);
-        ctx.lineTo(colW * i, h * 0.72);
-        ctx.stroke();
+      if (b.crossFlash[i] > 0) {
+        ctx.globalAlpha = b.crossFlash[i];
+        ctx.font = '800 12px -apple-system, Segoe UI, Roboto, sans-serif';
+        ctx.fillStyle = '#ffc83d';
+        ctx.fillText('+' + self.fmtMult(g) + ' BANKED', x, barY - 32);
+        ctx.globalAlpha = 1;
       }
     });
 
-    if (b.settled && b.hitsLabel) {
-      ctx.textAlign = 'center';
+    var mx = xFor(b.display);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(mx, barY + barH / 2, 6, 0, Math.PI * 2); ctx.fill();
+
+    var runningTotal = gates.reduce(function (sum, g, i) { return sum + (b.crossedNow[i] ? g : 0); }, 0);
+
+    var cy = h * 0.55;
+    var color = b.settled ? (b.crossedNow[2] ? '#ffc83d' : (runningTotal > 0 ? '#00e701' : '#ff4d4d')) : '#ffffff';
+    var fontSize = Math.max(26, Math.min(56, w * 0.09));
+    ctx.textBaseline = 'middle';
+    ctx.font = '800 ' + fontSize + 'px -apple-system, Segoe UI, Roboto, sans-serif';
+    ctx.shadowColor = color; ctx.shadowBlur = b.settled ? 24 : 10;
+    ctx.fillStyle = color;
+    ctx.fillText(this.fmtMult(b.display), w / 2, cy);
+    ctx.shadowBlur = 0;
+
+    ctx.font = '700 13px -apple-system, Segoe UI, Roboto, sans-serif';
+    ctx.fillStyle = color;
+    ctx.fillText('TOTAL ' + this.fmtMult(runningTotal), w / 2, cy + fontSize * 0.62 + 16);
+
+    if (b.settled && b.crossedNow[2]) {
       ctx.font = '800 17px -apple-system, Segoe UI, Roboto, sans-serif';
       ctx.fillStyle = '#ffc83d';
-      ctx.fillText('★ ' + b.hitsLabel + ' ★', w / 2, h * 0.72);
+      ctx.fillText('★ TRIPLE HIT ★', w / 2, cy + fontSize * 0.62 + 42);
     }
   };
 

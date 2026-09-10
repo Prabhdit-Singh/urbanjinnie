@@ -25,6 +25,7 @@
 
     this.bet = CFG.bet.default;
     this.target = CFG.target.default;
+    this.tripleTarget = CFG.bonusModes.tripleShot.startTarget.default;
     this.turbo = false;
     this.sound = true;
     this.busy = false;
@@ -39,6 +40,7 @@
     };
 
     this.buildQuickTargets();
+    this.buildTripleStartPresets();
     this.bind();
     this.renderBalance();
     this.renderBet();
@@ -104,6 +106,27 @@
       b.addEventListener('click', function () { self.sfx.click(); self.setTarget(t); });
       host.appendChild(b);
     });
+  };
+
+  P.buildTripleStartPresets = function () {
+    var host = $('tripleStartPresets');
+    var self = this;
+    CFG.bonusModes.tripleShot.startPresets.forEach(function (t) {
+      var b = document.createElement('button');
+      b.className = 'mini-btn wide';
+      b.textContent = t + '×';
+      b.addEventListener('click', function () { self.sfx.click(); self.setTripleTarget(t); });
+      host.appendChild(b);
+    });
+  };
+
+  P.setTripleTarget = function (v) {
+    var st = CFG.bonusModes.tripleShot.startTarget;
+    if (isNaN(v)) v = st.default;
+    v = Math.min(st.max, Math.max(st.min, v));
+    this.tripleTarget = Math.round(v * 100) / 100;
+    $('tripleStartInput').value = this.tripleTarget.toFixed(2);
+    this.renderBonusModal();
   };
 
   P.setBusy = function (b) {
@@ -196,6 +219,9 @@
     // bonus buy modal
     click('btnBonus', function () { self.renderBonusModal(); self.openModal('bonusModal'); });
     click('bonusClose', function () { self.closeModal('bonusModal'); });
+    $('tripleStartInput').addEventListener('change', function () {
+      self.setTripleTarget(parseFloat($('tripleStartInput').value));
+    });
     click('rushConfirm', function () { self.closeModal('bonusModal'); self.bonus_('rush'); });
     click('tripleConfirm', function () { self.closeModal('bonusModal'); self.bonus_('tripleShot'); });
     click('jackpotConfirm', function () { self.closeModal('bonusModal'); self.bonus_('jackpot'); });
@@ -281,15 +307,16 @@
   };
 
   P.renderBonusModal = function () {
-    var lanes = CFG.tripleShotLanes();
     var jackpot = CFG.bonusModes.jackpot;
 
     $('rushDesc').textContent = CFG.bonusModes.rush.shots + ' rapid-fire shots at your Target Multiplier (' +
       this.target.toFixed(2) + '×).';
     $('rushCost').textContent = this.fmt(this.costMultiplierFor('rush') * this.bet);
 
-    $('tripleDesc').textContent = lanes.length + ' independent lanes at ' +
-      lanes.map(function (t) { return t + '×'; }).join(' / ') + ' — hits add up.';
+    $('tripleStartInput').value = this.tripleTarget.toFixed(2);
+    var gates = CFG.tripleShotGates(this.tripleTarget);
+    $('tripleDesc').textContent = 'Gates: ' + gates.map(function (g) { return g + '×'; }).join(' / ') +
+      '  ·  max total ' + (gates[0] + gates[1] + gates[2]) + '×';
     $('tripleCost').textContent = this.fmt(this.costMultiplierFor('tripleShot') * this.bet);
 
     $('jackpotDesc').textContent = 'MIN WIN ' + jackpot.minWin + '× · MAX WIN ' +
@@ -311,7 +338,8 @@
     this.message(CFG.bonusModes[mode].label + ' — good luck!');
     this.setBusy(true);
 
-    return this.onBonus(mode, this.target, this.clientSeed, this.turbo).then(function (result) {
+    var modeTarget = mode === 'tripleShot' ? this.tripleTarget : this.target;
+    return this.onBonus(mode, modeTarget, this.clientSeed, this.turbo).then(function (result) {
       self.balance += result.payout;
       self.renderBalance();
       self.renderFairness();

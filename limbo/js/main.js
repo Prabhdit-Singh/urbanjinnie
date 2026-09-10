@@ -38,14 +38,16 @@
         });
       }
       if (mode === 'tripleShot') {
-        var lanes = CFG.tripleShotLanes();
-        var tripleRec = engine.playTripleShot(clientSeed, lanes);
+        var tripleRec = engine.playTripleShot(clientSeed, target);
         return renderer.playTripleShot(tripleRec, { turbo: turbo }).then(function () {
           var payout = tripleRec.totalPayoutX * ui.bet;
           return {
             payout: payout,
-            summary: 'Triple Shot — ' + tripleRec.hits + ' hit(s), ' +
-              (payout > 0 ? 'won ' + ui.fmt(payout) + '!' : 'no hits, try again.')
+            summary: tripleRec.hits === 3
+              ? 'TRIPLE HIT! ' + tripleRec.result.toFixed(2) + '× cleared all 3 gates — won ' + ui.fmt(payout) + '!'
+              : payout > 0
+                ? tripleRec.hits + ' gate(s) cleared — won ' + ui.fmt(payout) + '!'
+                : 'Missed the first gate — try again.'
           };
         });
       }
