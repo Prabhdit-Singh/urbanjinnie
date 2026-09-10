@@ -56,7 +56,7 @@ function fixedTarget(eng, target, n) {
   var empirical = 100 * wins / n;
   var theoretical = CFG.chanceForTarget(target);
   console.log('target %sx: win rate %s%% (theoretical %s%%), RTP %s%%',
-    target, empirical.toFixed(3), theoretical.toFixed(3), (100 * totalWin / n / target).toFixed(2));
+    target, empirical.toFixed(3), theoretical.toFixed(3), (100 * totalWin / n).toFixed(2));
 }
 
 console.log('APEX LIMBO math verification — target RTP %s%%\n', (CFG.rtp * 100).toFixed(1));

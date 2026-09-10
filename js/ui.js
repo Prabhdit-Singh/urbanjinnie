@@ -61,6 +61,10 @@
     $('btnSpin').disabled = b && !this.auto.active;
     $('btnBuy').disabled = b || this.ante;
     $('betInput').disabled = b;
+    $('betHalf').disabled = b;
+    $('betDouble').disabled = b;
+    $('betMin').disabled = b;
+    $('betMax').disabled = b;
     document.body.classList.toggle('busy', b);
   };
 
@@ -108,7 +112,7 @@
     document.addEventListener('keydown', function (e) {
       if (e.code === 'Space' && !e.repeat) {
         e.preventDefault();
-        if (!self.busy && !self.modalOpen()) {
+        if (!self.busy && !self.auto.active && !self.modalOpen()) {
           self.sfx.ensure();
           self.spin(self.ante ? 'ante' : 'base');
         }

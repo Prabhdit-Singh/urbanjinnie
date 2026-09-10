@@ -33,6 +33,18 @@
     this.clientSeed = localStorage.getItem('apex_limbo_clientseed') || this.engine.suggestClientSeed();
     localStorage.setItem('apex_limbo_clientseed', this.clientSeed);
 
+    // Restore the live (unrevealed) server seed + nonce across a reload —
+    // without this, a page refresh silently strands whatever seed was
+    // committed-but-not-yet-rotated, making every bet placed under it
+    // permanently unverifiable (its hash was shown, but the seed itself
+    // is gone). engine.serverSeed/nonce are plain public fields, so this
+    // is just a restore, not an API change to GameEngine.
+    var savedServerSeed = localStorage.getItem('apex_limbo_serverseed');
+    if (savedServerSeed) {
+      this.engine.serverSeed = savedServerSeed;
+      this.engine.nonce = parseInt(localStorage.getItem('apex_limbo_nonce'), 10) || 0;
+    }
+
     this.auto = {
       active: false, remaining: 0, count: CFG.auto.defaultCount,
       onWinMode: 'reset', onWinPct: 0, onLossMode: 'reset', onLossPct: 0,
@@ -65,6 +77,7 @@
   };
 
   P.setBet = function (v) {
+    if (isNaN(v)) v = CFG.bet.default;
     v = Math.min(CFG.bet.max, Math.max(CFG.bet.min, v));
     this.bet = Math.round(v * 100) / 100;
     this.renderBet();
@@ -76,7 +89,15 @@
 
   P.renderTarget = function () {
     $('targetInput').value = this.target.toFixed(2);
-    $('chanceInput').value = CFG.chanceForTarget(this.target).toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
+    // Significant-figure formatting (not a fixed decimal count) so the
+    // value round-trips losslessly back to the same 0.01-stepped target if
+    // the player re-commits exactly what's shown, across the whole 5+
+    // order-of-magnitude chance range — a fixed .toFixed(4) was far too
+    // coarse at high targets (e.g. 1,000,000x displayed as "0.0001"
+    // round-tripped to 990,000x when re-entered; toPrecision(9) verified
+    // to round-trip exactly across the full [1.01, 1000000] target range).
+    $('chanceInput').value = CFG.chanceForTarget(this.target).toPrecision(9)
+      .replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
     this.renderPayout();
     if (this.renderer) this.renderer.setTarget(this.target);
   };
@@ -135,7 +156,7 @@
     $('betInput').disabled = b;
     $('targetInput').disabled = b;
     $('chanceInput').disabled = b;
-    $('btnBonus').disabled = b;
+    $('btnBonus').disabled = b || this.auto.active;
     document.body.classList.toggle('busy', b);
   };
 
@@ -296,6 +317,11 @@
     $('fairServerHash').value = this.engine.serverSeedHash();
     $('fairClientSeed').value = this.clientSeed;
     $('fairNonce').value = String(this.engine.nonce);
+    // Called after every bet/bonus and right after a seed rotation, so this
+    // is also the natural place to keep the live seed+nonce persisted —
+    // see the restore in the constructor above.
+    localStorage.setItem('apex_limbo_serverseed', this.engine.serverSeed);
+    localStorage.setItem('apex_limbo_nonce', String(this.engine.nonce));
   };
 
   /* ---- bonus buy ------------------------------------------------------------ */
@@ -315,8 +341,8 @@
 
     $('tripleStartInput').value = this.tripleTarget.toFixed(2);
     var gates = CFG.tripleShotGates(this.tripleTarget);
-    $('tripleDesc').textContent = 'Gates: ' + gates.map(function (g) { return g + '×'; }).join(' / ') +
-      '  ·  max total ' + (gates[0] + gates[1] + gates[2]) + '×';
+    $('tripleDesc').textContent = 'Gates: ' + gates.map(function (g) { return g.toFixed(2) + '×'; }).join(' / ') +
+      '  ·  max total ' + (gates[0] + gates[1] + gates[2]).toFixed(2) + '×';
     $('tripleCost').textContent = this.fmt(this.costMultiplierFor('tripleShot') * this.bet);
 
     $('jackpotDesc').textContent = 'MIN WIN ' + jackpot.minWin + '× · MAX WIN ' +
@@ -328,8 +354,8 @@
     var self = this;
     if (this.busy) return Promise.resolve(false);
     var cost = this.costMultiplierFor(mode) * this.bet;
-    if (cost > this.balance + 1e-9) {
-      this.message('Insufficient demo balance for this bonus — press ↺ to reset.');
+    if (isNaN(cost) || cost > this.balance + 1e-9) {
+      this.message(isNaN(cost) ? 'Invalid bet amount.' : 'Insufficient demo balance for this bonus — press ↺ to reset.');
       return Promise.resolve(false);
     }
     this.balance -= cost;
@@ -358,8 +384,8 @@
   P.bet_ = function () {
     var self = this;
     if (this.busy) return Promise.resolve(false);
-    if (this.bet > this.balance + 1e-9) {
-      this.message('Insufficient demo balance — press ↺ to reset.');
+    if (isNaN(this.bet) || this.bet > this.balance + 1e-9) {
+      this.message(isNaN(this.bet) ? 'Invalid bet amount.' : 'Insufficient demo balance — press ↺ to reset.');
       this.stopAuto();
       return Promise.resolve(false);
     }
@@ -394,6 +420,12 @@
     this.auto.sessionPL = 0;
     $('btnAutoStart').textContent = 'Stop Autoplay';
     $('btnAutoStart').classList.add('stop');
+    // Bonus Buy shares the same round-orchestration path as a normal bet
+    // (busy guard, balance debit/credit) but autoLoop doesn't know how to
+    // account for a bonus round — keep it out of reach for the whole
+    // autoplay session, not just mid-round, so it can never eat an
+    // autoplay "turn" with no bet placed.
+    $('btnBonus').disabled = true;
     this.sfx.autoToggle(true);
     this.autoLoop();
   };
@@ -402,6 +434,7 @@
     this.auto.active = false;
     $('btnAutoStart').textContent = 'Start Autoplay';
     $('btnAutoStart').classList.remove('stop');
+    if (!this.busy) $('btnBonus').disabled = false;
     this.sfx.autoToggle(false);
     if (msg) this.message(msg);
   };
@@ -417,7 +450,8 @@
       (this.auto.remaining === Infinity ? '∞' : this.auto.remaining) + ')';
 
     this.bet_().then(function (outcome) {
-      if (!outcome || !self.auto.active) return;
+      if (!self.auto.active) return;
+      if (!outcome) { self.stopAuto('Autoplay stopped — the last bet could not be placed.'); return; }
       self.auto.sessionPL += outcome.profit;
 
       var mode = outcome.win ? self.auto.onWinMode : self.auto.onLossMode;

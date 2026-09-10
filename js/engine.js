@@ -160,12 +160,22 @@
   P.playSpin = function (ctx) {
     var weights = this.buildWeightTable(ctx.opts);
     var grid;
+    var wasForced = !!ctx.opts.forcedScatters;
     if (ctx.opts.forcedScatters) {
       grid = this.makeForcedGrid(weights, ctx.opts.forcedScatters);
       ctx.opts.forcedScatters = null; // only the triggering spin is forced
     } else {
       grid = this.makeGrid(weights);
     }
+
+    // Bonus Buy / Super Bonus Buy: the awarded free-spins tier must reflect
+    // EXACTLY the scatter count that was forced at reveal. Tumble refills
+    // below still draw at the normal scatter weight (so tumble physics stay
+    // identical to a natural round) — but if we let those refills silently
+    // add MORE scatters to the count that decides the awarded tier, forced
+    // rounds land on a higher tier than the configured forcedScatters odds
+    // promise, inflating RTP above its target.
+    var triggerScatters = wasForced ? this.countScatters(grid) : null;
 
     var spots = ctx.opts.persistSpots ? ctx.spots : {};
     var startHits = ctx.opts.startHits || CFG.multiplier.startHits;
@@ -214,7 +224,7 @@
 
     ctx.roundWin += spinWin;
     if (ctx.opts.persistSpots) ctx.spots = spots;
-    return { win: spinWin, scatters: this.countScatters(grid) };
+    return { win: spinWin, scatters: triggerScatters !== null ? triggerScatters : this.countScatters(grid) };
   };
 
   /* ---- Full round ------------------------------------------------------
@@ -240,6 +250,7 @@
       if (ctx.roundWin + sPay > CFG.maxWinX) sPay = CFG.maxWinX - ctx.roundWin;
       ctx.roundWin += sPay;
       ctx.events.push({ type: 'scatterPay', count: base.scatters, pay: sPay });
+      if (ctx.roundWin >= CFG.maxWinX) ctx.capped = true;
     }
 
     if (base.scatters >= CFG.freeSpins.trigger && !ctx.capped) {

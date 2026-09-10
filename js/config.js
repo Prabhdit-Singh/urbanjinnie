@@ -46,7 +46,7 @@
       // "Double Chance" ante: +25% bet cost, ~doubles the free spins trigger
       // frequency (P(>=3 scatters) scales ~cubically in the per-cell rate,
       // so the weight multiplier is 2^(1/3) ~= 1.26). Base game only.
-      anteScatterMult: 1.20,
+      anteScatterMult: 1.26,
       // Scatter weight inside free spins (retrigger chance)
       fsScatterMult: 0.5
     },
@@ -86,7 +86,13 @@
       base:     { cost: 1.0,  label: 'Base Game' },
       ante:     { cost: 1.25, label: 'Double Chance' },
       buy:      { cost: 100,  label: 'Bonus Buy',       forcedScatters: { 3: 88, 4: 10, 5: 2 } },
-      superbuy: { cost: 500,  label: 'Super Bonus Buy', forcedScatters: { 3: 80, 4: 14, 5: 6 },
+      // cost recalibrated from 500 (QA audit: after fixing the scatter-count
+      // inflation bug in engine.js, cost=500 measured ~101.4% RTP across 3
+      // independent 100k-round seeds against a 96.6% target — a stable,
+      // low-variance overshoot, not sampling noise. EV in bet-multiples is
+      // ~506.8 regardless of cost, so cost = EV / targetRTP = 506.8/0.966
+      // ~= 524.6; re-run tools/simulate.js after any further math changes here.
+      superbuy: { cost: 525,  label: 'Super Bonus Buy', forcedScatters: { 3: 80, 4: 14, 5: 6 },
                   // SUPER free spins: every mark becomes x2 on its FIRST hit
                   // (instead of the second), and random spots are pre-placed.
                   superSpots: true,

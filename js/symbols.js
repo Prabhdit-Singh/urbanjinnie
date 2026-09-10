@@ -225,6 +225,7 @@
   /* ---- public API ------------------------------------------------------- */
   var SymbolArt = {
     sprite: function (id, size) {
+      size = Math.max(1, size); // a 0x0 canvas throws on drawImage() in real browsers
       var key = id + '@' + size;
       if (cache[key]) return cache[key];
       var cv = document.createElement('canvas');
@@ -237,6 +238,7 @@
       return cv;
     },
     draw: function (ctx, id, x, y, size) {
+      if (size < 1) return; // near-zero explode tween frames: nothing meaningful to draw
       ctx.drawImage(this.sprite(id, Math.round(size)), x, y, size, size);
     },
     roundRectPath: roundRectPath,

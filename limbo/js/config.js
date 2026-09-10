@@ -96,11 +96,13 @@
         // Closed form for this payout shape: E[payout] = (1-houseEdge) *
         // (1 + ln(maxWin/minWin)); cost = E[payout] / targetRTP. With
         // targetRTP == (1-houseEdge) the (1-houseEdge) factor cancels, so
-        // cost = 1 + ln(maxWin/minWin) = 1 + ln(100000/25) ~= 9.294,
+        // cost = 1 + ln(maxWin/minWin) = 1 + ln(100000/25) = 9.2938...,
         // confirmed by direct numerical integration (not Monte Carlo —
         // a single maxWin hit is ~1-in-101,010, so naive simulation needs
-        // tens of millions of rounds to converge; see tools/simulate_bonus.js).
-        costMultiplier: 9.30
+        // tens of millions of rounds to converge; see tools/jackpot_integral.js).
+        // 9.2938 rounds to the nearest cent as 9.29 (a prior pass here
+        // mistakenly used 9.30, which understates RTP by ~0.1pp).
+        costMultiplier: 9.29
 
       }
     }

@@ -13,6 +13,17 @@ function fakeCtx() {
         return fakeGradient;
       if (prop === 'measureText') return function () { return { width: 42 }; };
       if (prop === 'canvas') return {};
+      // Real browsers throw InvalidStateError on drawImage() with a 0x0
+      // source canvas; replicate that so this smoke test can actually catch
+      // the "sprite cached at size 0" class of bug instead of silently
+      // no-opping through it.
+      if (prop === 'drawImage') {
+        return function (img) {
+          if (img && (img.width === 0 || img.height === 0)) {
+            throw new Error('InvalidStateError: drawImage source canvas has a width or height of 0');
+          }
+        };
+      }
       if (typeof t[prop] !== 'undefined') return t[prop];
       return function () {};
     },

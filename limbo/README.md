@@ -55,7 +55,7 @@ and keeps every mode's numbers directly comparable.
 | --- | --- | --- | --- | --- |
 | **Rush Mode** (accessible) | Medium-High | 10 rapid-fire shots at your current Target Multiplier | 10× bet | Literally 10 independent normal bets, fired back to back — RTP-neutral by construction (99%) |
 | **Triple Shot** (premium) | High | 1 draw, 3 escalating prize gates at your chosen starting target × 1/10/100 | 3× bet | Payout = sum of every gate the one draw cleared — RTP-neutral by construction (99%, exactly, for any starting target) |
-| **Jackpot Shot** (extreme) | Extreme | 1 draw against a disclosed prize range — MIN WIN 25×, MAX WIN 100,000× | 9.30× bet | Below MIN WIN: miss (payout 0). At/above MIN WIN: the draw's *own value*, clamped to MAX WIN, **is** the payout — no separate prize table or wheel |
+| **Jackpot Shot** (extreme) | Extreme | 1 draw against a disclosed prize range — MIN WIN 25×, MAX WIN 100,000× | 9.29× bet | Below MIN WIN: miss (payout 0). At/above MIN WIN: the draw's *own value*, clamped to MAX WIN, **is** the payout — no separate prize table or wheel |
 
 **Rush Mode** reuses your Target Multiplier field directly — it's not a
 separate setting. The stage reveals shots as a rapid ticker (not a wait for
@@ -90,7 +90,7 @@ label on the same plain summed payout, same as the other modes' win labels.
 underlying result distribution is already heavy-tailed (the same one every
 normal bet uses), conditioning on "at least MIN WIN" and capping at MAX WIN
 naturally puts most winning draws near the low end with progressively rarer
-huge ones — no artificial weighting needed. Its cost (9.30× bet) is
+huge ones — no artificial weighting needed. Its cost (9.29× bet) is
 calibrated **analytically**, not by naive Monte Carlo: a single MAX WIN hit
 is roughly 1-in-101,000, so a simulated RTP reading needs tens of millions
 of rounds before it stops swinging ~50% run to run (see the fat-tail warning

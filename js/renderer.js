@@ -62,7 +62,7 @@
 
     var loop = function (t) {
       self.time = t / 1000;
-      self.draw();
+      try { self.draw(); } catch (e) { console.error('render frame error (skipped):', e); }
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
@@ -536,7 +536,7 @@
     for (var c2 = 0; c2 < this.cols; c2++) {
       for (var r2 = 0; r2 < this.rows; r2++) {
         var cell = this.cells[c2][r2];
-        if (!cell || cell.alpha <= 0 || cell.scale <= 0) continue;
+        if (!cell || cell.alpha <= 0 || cell.scale <= 0.02) continue;
         var q = this.cellXY(c2, r2);
         var size = cs * 0.94 * cell.scale;
         var ox = q.x + (cs - size) / 2;
