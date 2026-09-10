@@ -1,5 +1,5 @@
 /* =========================================================================
- * CANDY SURGE 1000 — Audio (WebAudio synthesis, no audio assets)
+ * APEX LIMBO — Audio (WebAudio synthesis, no audio assets)
  * ========================================================================= */
 (function (g) {
   'use strict';
@@ -62,57 +62,33 @@
   /* ---- game events ------------------------------------------------------ */
   P.click = function () { this.tone({ type: 'triangle', freq: 660, dur: 0.06, vol: 0.25 }); };
 
-  P.spin = function () { this.noise({ freq: 500, slide: 2400, dur: 0.35, vol: 0.2 }); };
-
-  P.land = function (i) {
-    this.noise({ freq: 900, slide: 250, dur: 0.08, vol: 0.12, delay: i * 0.03 });
+  // Rising tick while the counter climbs — pitch tracks progress (0..1).
+  P.tick = function (progress) {
+    var f = 480 + progress * 900;
+    this.tone({ type: 'square', freq: f, dur: 0.035, vol: 0.08 });
   };
 
-  P.pop = function (chain) {
-    var f = 300 * Math.pow(1.13, Math.min(chain, 12));
-    this.tone({ type: 'square', freq: f, slide: f * 1.6, dur: 0.1, vol: 0.18 });
-    this.tone({ type: 'sine', freq: f * 2, dur: 0.12, vol: 0.12, delay: 0.02 });
-    this.noise({ freq: 2500, slide: 800, dur: 0.1, vol: 0.1 });
-  };
-
-  P.winChime = function (level) {
-    var base = 523.25 * Math.pow(1.06, Math.min(level || 0, 8));
-    var steps = [1, 1.25, 1.5];
+  P.win = function (payoutX) {
+    var base = 523.25 * Math.pow(1.05, Math.min(Math.log2(Math.max(payoutX, 1)) * 3, 16));
+    var steps = [1, 1.25, 1.5, 2];
     for (var i = 0; i < steps.length; i++)
-      this.tone({ type: 'triangle', freq: base * steps[i], dur: 0.18, vol: 0.2, delay: i * 0.05 });
-  };
-
-  P.multiplier = function () {
-    this.tone({ type: 'sine', freq: 1318, dur: 0.25, vol: 0.25 });
-    this.tone({ type: 'sine', freq: 1976, dur: 0.3, vol: 0.18, delay: 0.07 });
-  };
-
-  P.scatter = function () {
-    var notes = [880, 1108.7, 1318.5];
-    for (var i = 0; i < notes.length; i++)
-      this.tone({ type: 'sine', freq: notes[i], dur: 0.2, vol: 0.22, delay: i * 0.06 });
-  };
-
-  P.bonus = function () {
-    var seq = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5, 1318.5];
-    for (var i = 0; i < seq.length; i++) {
-      this.tone({ type: 'triangle', freq: seq[i], dur: 0.22, vol: 0.3, delay: i * 0.11 });
-      this.tone({ type: 'sine', freq: seq[i] / 2, dur: 0.22, vol: 0.15, delay: i * 0.11 });
+      this.tone({ type: 'triangle', freq: base * steps[i], dur: 0.2, vol: 0.22, delay: i * 0.05 });
+    if (payoutX >= CFGApexWinFactor()) {
+      this.noise({ freq: 2500, slide: 6000, dur: 0.5, vol: 0.1, filter: 'highpass' });
     }
   };
 
-  P.bigWin = function () {
-    var seq = [659.25, 783.99, 987.77, 1318.5];
-    for (var i = 0; i < seq.length; i++)
-      this.tone({ type: 'sawtooth', freq: seq[i], dur: 0.3, vol: 0.12, delay: i * 0.09 });
-    this.noise({ freq: 3000, slide: 6000, dur: 0.5, vol: 0.08, filter: 'highpass' });
+  function CFGApexWinFactor() {
+    return (g.GameConfig && g.GameConfig.apexWinFactor) || 5;
+  }
+
+  P.bust = function () {
+    this.tone({ type: 'sawtooth', freq: 220, slide: 60, dur: 0.28, vol: 0.2 });
+    this.noise({ freq: 400, slide: 90, dur: 0.25, vol: 0.15, filter: 'lowpass' });
   };
 
-  P.tick = function () { this.tone({ type: 'square', freq: 1500, dur: 0.03, vol: 0.05 }); };
-
-  P.maxWin = function () {
-    for (var i = 0; i < 10; i++)
-      this.tone({ type: 'triangle', freq: 523.25 * Math.pow(2, (i % 5) / 5), dur: 0.25, vol: 0.2, delay: i * 0.08 });
+  P.autoToggle = function (on) {
+    this.tone({ type: 'sine', freq: on ? 880 : 440, dur: 0.1, vol: 0.2 });
   };
 
   g.AudioFx = AudioFx;

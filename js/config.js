@@ -1,120 +1,129 @@
 /* =========================================================================
- * CANDY SURGE 1000 — Game Configuration ("math config")
+ * APEX LIMBO — Game Configuration ("math config")
  *
- * Mirrors the Stake Engine math-sdk configuration concept: every tunable
- * number that defines the game's math model lives here, separate from
- * presentation. The engine (engine.js) consumes this config and produces
- * a deterministic event book; the frontend only replays it.
- *
- * Win evaluation type: "cluster" (one of the four supported by Stake
- * Engine: lines | ways | cluster | scatter).
+ * Every tunable number that defines the game's math lives here, apart
+ * from presentation.
  * ========================================================================= */
 (function (g) {
   'use strict';
 
   var CONFIG = {
-    gameId: 'candy_surge_1000',
-    gameName: 'CANDY SURGE 1000',
-    providerName: 'YOUR STUDIO',       // publisher logo / name placeholder
+    gameId: 'apex_limbo',
+    gameName: 'APEX LIMBO',
+    providerName: 'YOUR STUDIO',   // publisher logo / name placeholder
     version: '1.0.0',
-    rtp: 0.965,                        // target RTP (declared, tuned via tools/simulate.js)
-    maxWinX: 25000,                    // max win cap, in bet multiples (round ends at cap)
-    winType: 'cluster',
 
-    grid: { cols: 7, rows: 7 },
-    minClusterSize: 5,
+    houseEdge: 0.01,               // 1% house edge -> 99% theoretical RTP at any target
+    rtp: 0.99,
 
-    /* ---- Symbols ------------------------------------------------------ */
-    // id: engine identifier | name/colors are used by the procedural artist
-    symbols: [
-      { id: 'star',  name: 'Star Pop',    color: '#ff4d6d', color2: '#b3123a' },
-      { id: 'heart', name: 'Heart Jelly', color: '#ff7ad9', color2: '#d630a8' },
-      { id: 'gem',   name: 'Berry Gem',   color: '#b06cff', color2: '#6f2dc9' },
-      { id: 'ring',  name: 'Ring Candy',  color: '#4fc3ff', color2: '#1671d9' },
-      { id: 'bean',  name: 'Sour Bean',   color: '#5ee06a', color2: '#1da53a' },
-      { id: 'drop',  name: 'Citrus Drop', color: '#ffb637', color2: '#e07c0a' },
-      { id: 'swirl', name: 'Mint Swirl',  color: '#3fe0c5', color2: '#0f9e8a' }
-    ],
-    scatter: { id: 'scatter', name: 'Crystal Cube' },
+    target: { min: 1.01, max: 1000000, default: 2.00, step: 0.01 },
 
-    /* ---- Reel weights (per-cell weighted draw) ------------------------ */
-    // Identical pool for initial reveal and tumble refills.
-    weights: {
-      base: { star: 2.5, heart: 3, gem: 4, ring: 5.5, bean: 7.5, drop: 9.5, swirl: 12, scatter: 0.24 },
-      // Free spins use a slightly hotter reel set (more clusters -> spots grow)
-      fs:   { star: 2.32, heart: 2.83, gem: 3.83, ring: 5.32, bean: 7.85, drop: 10.32, swirl: 13.05 },
-      // "Double Chance" ante: +25% bet cost, ~doubles the free spins trigger
-      // frequency (P(>=3 scatters) scales ~cubically in the per-cell rate,
-      // so the weight multiplier is 2^(1/3) ~= 1.26). Base game only.
-      anteScatterMult: 1.26,
-      // Scatter weight inside free spins (retrigger chance)
-      fsScatterMult: 0.5
-    },
-
-    /* ---- Paytable (bet multiples, per cluster size tier) --------------- */
-    // Tiers by cluster size: 5 / 6 / 7 / 8-9 / 10-11 / 12-14 / 15+
-    clusterTiers: [5, 6, 7, 8, 10, 12, 15],
-    paytable: {
-      star:  [0.80, 1.25, 2.40, 5.00, 12.0, 50.0, 250.0],
-      heart: [0.60, 1.00, 2.00, 4.00, 10.0, 30.0, 150.0],
-      gem:   [0.50, 0.80, 1.50, 3.00, 8.00, 20.0, 100.0],
-      ring:  [0.40, 0.60, 1.20, 2.50, 5.50, 12.0, 60.0],
-      bean:  [0.30, 0.50, 1.00, 1.50, 4.00, 8.00, 40.0],
-      drop:  [0.25, 0.40, 0.80, 1.20, 3.00, 6.00, 25.0],
-      swirl: [0.15, 0.30, 0.60, 1.00, 2.50, 5.00, 15.0]
-    },
-    // Scatter pays (count: 3..7+), paid once per round on trigger evaluation
-    scatterPays: { 3: 2, 4: 4, 5: 10, 6: 50, 7: 200 },
-
-    /* ---- Multiplier spots ---------------------------------------------- */
-    // A win marks each cell of the cluster. The 2nd hit turns the mark into
-    // x2; every following hit doubles it, up to the cap. A cluster's win is
-    // multiplied by the SUM of multiplier values (>= x2) under it, applied
-    // BEFORE the marks from that same win are added.
-    multiplier: { startHits: 2, base: 2, cap: 1024 },
-    // Base game: marks reset every paid spin. Free spins: persist all bonus.
-
-    /* ---- Free spins ----------------------------------------------------- */
-    freeSpins: {
-      trigger: 3,            // min scatters to trigger
-      awards: { 3: 10, 4: 12, 5: 14, 6: 16, 7: 18 },
-      retriggerSpins: 10     // 3+ scatters during a free spin
-    },
-
-    /* ---- Bet modes ------------------------------------------------------ */
-    betModes: {
-      base:     { cost: 1.0,  label: 'Base Game' },
-      // cost recalibrated from 1.25 (QA audit: fixing anteScatterMult to
-      // deliver its promised 2x bonus frequency also raises ante's average
-      // win, since bonuses pay much more than base spins — 1.25x wasn't
-      // enough to compensate. 3x3M-round sweep post-fix: EV~=1.2593x bet,
-      // stable across seeds (100.6-100.9% RTP at cost=1.25). New cost =
-      // EV/targetRTP = 1.2593/0.964 ~= 1.306; re-verify with simulate.js
-      // after any further change to anteScatterMult or the base paytable.
-      ante:     { cost: 1.31, label: 'Double Chance' },
-      buy:      { cost: 100,  label: 'Bonus Buy',       forcedScatters: { 3: 88, 4: 10, 5: 2 } },
-      // cost recalibrated from 500 (QA audit: after fixing the scatter-count
-      // inflation bug in engine.js, cost=500 measured ~101.4% RTP across 3
-      // independent 100k-round seeds against a 96.6% target — a stable,
-      // low-variance overshoot, not sampling noise. EV in bet-multiples is
-      // ~506.8 regardless of cost, so cost = EV / targetRTP = 506.8/0.966
-      // ~= 524.6; re-run tools/simulate.js after any further math changes here.
-      superbuy: { cost: 525,  label: 'Super Bonus Buy', forcedScatters: { 3: 80, 4: 14, 5: 6 },
-                  // SUPER free spins: every mark becomes x2 on its FIRST hit
-                  // (instead of the second), and random spots are pre-placed.
-                  superSpots: true,
-                  seedSpots: { min: 6, max: 9, values: { 2: 32, 4: 28, 8: 20, 16: 12, 32: 8 } } }
-    },
-
-    /* ---- Bet limits (demo wallet) --------------------------------------- */
     bet: { min: 0.10, max: 100, default: 1.00, steps: [0.10, 0.20, 0.50, 1, 2, 5, 10, 20, 50, 100] },
-    startBalance: 1000
+    startBalance: 1000,
+
+    quickTargets: [1.5, 2, 5, 10, 50, 100],
+
+    auto: {
+      counts: [10, 25, 50, 100, 'inf'],
+      defaultCount: 25,
+      maxAdjustPct: 1000,          // cap on-win/on-loss bet-change percentage
+      delayMs: 550                 // pause between auto-bets (turbo halves it)
+    },
+
+    history: { size: 20 },
+
+    // cosmetic-only "APEX" celebration threshold: fires when a win clears
+    // the target by at least this factor. Purely presentational — has no
+    // effect on the result or payout.
+    apexWinFactor: 5,
+
+    /* ---- Bonus Buy modes ---------------------------------------------
+     * All three reuse the exact same provably-fair draw (computeResult in
+     * engine.js) that a normal bet uses — they differ only in how many
+     * draws are taken and how the draw(s) are turned into a payout. None
+     * of them touch houseEdge; each mode's cost is derived from the SAME
+     * math that prices a normal bet, so RTP stays honest and is checked
+     * by tools/simulate_bonus.js rather than just asserted here. */
+    bonusModes: {
+      // RUSH MODE — "accessible": fires `shots` independent bets at the
+      // player's current Target Multiplier, back to back, fast. This is
+      // literally N normal bets (cost = N x bet, RTP = base RTP) wearing
+      // a rapid-fire presentation — no separate math to balance.
+      rush: {
+        id: 'rush',
+        label: 'Rush Mode',
+        tagline: 'Speed & accumulation',
+        volatility: 'Medium-High',
+        shots: 10,
+        shotIntervalMs: 170
+        // cost = shots x bet (see UI.rushCost)
+      },
+
+      // TRIPLE SHOT — "premium": ONE draw, THREE escalating prize gates at
+      // startTarget x [1, 10, 100]. Crossing a gate doesn't replace the
+      // previous prize, it adds to it — payout = sum of every gate the one
+      // result cleared. Because payout(result) = sum_j gate_j * 1[result >=
+      // gate_j], linearity of expectation gives E[payout] = sum_j gate_j *
+      // P(result>=gate_j) = sum_j gate_j*(houseEdge-complement/gate_j) =
+      // 3*(1-houseEdge) -- the gate_j values cancel out completely, so RTP
+      // is EXACTLY (1-houseEdge) for every possible startTarget, no
+      // calibration needed (see tools/simulate_bonus.js for the empirical
+      // check). The player's startTarget choice is the volatility control.
+      tripleShot: {
+        id: 'tripleShot',
+        label: 'Triple Shot',
+        tagline: 'One flight, three escalating gates',
+        volatility: 'High',
+        gateRatios: [1, 10, 100],
+        startTarget: { min: 2, max: 900, default: 10, step: 0.01 },
+        startPresets: [2, 5, 10, 25, 50, 100, 250, 500, 900]
+        // cost = 3 x bet, ALWAYS (see UI.tripleShotCost) — independent of startTarget
+      },
+
+      // JACKPOT SHOT — "extreme": one draw. Below minWin it's a plain
+      // miss (payout 0); at or above minWin the draw has already "entered
+      // the zone" and its OWN value (clamped to maxWin) becomes the
+      // payout — no separate prize table, no wheel. Because the base
+      // result distribution is already heavy-tailed, awards land far more
+      // often near minWin than near maxWin with no extra weighting logic.
+      jackpot: {
+        id: 'jackpot',
+        label: 'Jackpot Shot',
+        tagline: 'One shot at something enormous',
+        volatility: 'Extreme',
+        minWin: 25,
+        maxWin: 100000,
+        // Closed form for this payout shape: E[payout] = (1-houseEdge) *
+        // (1 + ln(maxWin/minWin)); cost = E[payout] / targetRTP. With
+        // targetRTP == (1-houseEdge) the (1-houseEdge) factor cancels, so
+        // cost = 1 + ln(maxWin/minWin) = 1 + ln(100000/25) = 9.2938...,
+        // confirmed by direct numerical integration (not Monte Carlo —
+        // a single maxWin hit is ~1-in-101,010, so naive simulation needs
+        // tens of millions of rounds to converge; see tools/jackpot_integral.js).
+        // 9.2938 rounds to the nearest cent as 9.29 (a prior pass here
+        // mistakenly used 9.30, which understates RTP by ~0.1pp).
+        costMultiplier: 9.29
+
+      }
+    }
   };
 
-  CONFIG.tierForSize = function (size) {
-    var tiers = CONFIG.clusterTiers, idx = 0;
-    for (var i = 0; i < tiers.length; i++) if (size >= tiers[i]) idx = i;
-    return idx;
+  CONFIG.rushCost = function () { return CONFIG.bonusModes.rush.shots; };
+
+  // The three escalating gate values for a chosen starting target.
+  CONFIG.tripleShotGates = function (startTarget) {
+    var m = CONFIG.bonusModes.tripleShot;
+    startTarget = Math.max(m.startTarget.min, Math.min(m.startTarget.max, startTarget));
+    return m.gateRatios.map(function (r) { return Math.round(startTarget * r * 100) / 100; });
+  };
+  CONFIG.tripleShotCost = function () { return CONFIG.bonusModes.tripleShot.gateRatios.length; };
+
+  // Win chance (%) for a given target multiplier, and the inverse.
+  CONFIG.chanceForTarget = function (target) {
+    return (100 * (1 - CONFIG.houseEdge)) / target;
+  };
+  CONFIG.targetForChance = function (chancePct) {
+    return (100 * (1 - CONFIG.houseEdge)) / chancePct;
   };
 
   g.GameConfig = CONFIG;

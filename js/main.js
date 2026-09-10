@@ -1,11 +1,11 @@
 /* =========================================================================
- * CANDY SURGE 1000 — bootstrap
+ * APEX LIMBO — bootstrap
  *
- * Flow per round (mirrors an RGS round lifecycle):
- *   1. UI debits the wallet (bet authorization)
- *   2. Engine produces the complete result book (server-side role)
- *   3. Renderer replays the book (client presentation)
- *   4. UI credits the win (settlement / end round)
+ * Flow per bet:
+ *   1. UI debits the wallet
+ *   2. Engine derives the provably-fair result (server-side role)
+ *   3. Renderer animates the count-up to that result (client presentation)
+ *   4. UI credits the payout (settlement)
  * ========================================================================= */
 (function () {
   'use strict';
@@ -13,26 +13,67 @@
   var engine = new window.GameEngine();
   var sfx = new window.AudioFx();
   var renderer = new window.Renderer(document.getElementById('game'), sfx);
+  var CFG = window.GameConfig;
 
   var ui = new window.UI({
     sfx: sfx,
-    onSpin: function (mode) {
-      var book = engine.playRound(mode);
-      return renderer
-        .playBook(book, {
-          bet: ui.bet,
-          turbo: ui.turbo,
-          onWin: function (winX) { ui.win(winX * ui.bet); }
-        })
-        .then(function () { return book.totalWinX * ui.bet; });
+    engine: engine,
+    onBet: function (target, clientSeed, turbo) {
+      var rec = engine.playBet(clientSeed, target);
+      return renderer.playResult(rec, { turbo: turbo }).then(function () {
+        return { win: rec.win, result: rec.result, payout: rec.win ? ui.bet * rec.target : 0 };
+      });
+    },
+    onBonus: function (mode, target, clientSeed, turbo) {
+      if (mode === 'rush') {
+        var rushCfg = CFG.bonusModes.rush;
+        var rushRec = engine.playRush(clientSeed, target, rushCfg.shots);
+        return renderer.playRush(rushRec, { turbo: turbo }).then(function () {
+          var payout = rushRec.totalPayoutX * ui.bet;
+          return {
+            payout: payout,
+            summary: 'Rush complete — ' + rushRec.hits + '/' + rushRec.shots.length +
+              ' hits, ' + (payout > 0 ? 'won ' + ui.fmt(payout) + '!' : 'no hits, try again.')
+          };
+        });
+      }
+      if (mode === 'tripleShot') {
+        var tripleRec = engine.playTripleShot(clientSeed, target);
+        return renderer.playTripleShot(tripleRec, { turbo: turbo }).then(function () {
+          var payout = tripleRec.totalPayoutX * ui.bet;
+          return {
+            payout: payout,
+            summary: tripleRec.hits === 3
+              ? 'TRIPLE HIT! ' + tripleRec.result.toFixed(2) + '× cleared all 3 gates — won ' + ui.fmt(payout) + '!'
+              : payout > 0
+                ? tripleRec.hits + ' gate(s) cleared — won ' + ui.fmt(payout) + '!'
+                : 'Missed the first gate — try again.'
+          };
+        });
+      }
+      if (mode === 'jackpot') {
+        var jCfg = CFG.bonusModes.jackpot;
+        var jackpotRec = engine.playJackpot(clientSeed, jCfg.minWin, jCfg.maxWin);
+        return renderer.playJackpot(jackpotRec, { turbo: turbo }).then(function () {
+          var payout = jackpotRec.payoutX * ui.bet;
+          return {
+            payout: payout,
+            summary: jackpotRec.hit
+              ? 'JACKPOT! ' + jackpotRec.result.toFixed(2) + '× — won ' + ui.fmt(payout) + '!'
+              : 'Jackpot missed — the draw never entered the zone.'
+          };
+        });
+      }
+      return Promise.resolve({ payout: 0, summary: 'Unknown bonus mode.' });
     }
   });
+  renderer.setTarget(ui.target);
+  ui.renderer = renderer;
 
-  // First user interaction unlocks audio (browser autoplay policy)
   document.addEventListener('pointerdown', function once() {
     sfx.ensure();
     document.removeEventListener('pointerdown', once);
   });
 
-  ui.message('Place your bet — press SPACE or hit Bet.');
+  ui.message('Set a target and press Bet — or hit SPACE.');
 })();

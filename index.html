@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Candy Surge 1000 — Demo</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%8D%AC</text></svg>">
+  <title>Apex Limbo — Demo</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%9A%80</text></svg>">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
   <div id="loadingScreen" class="loading-screen">
     <div class="loading-card">
       <video class="loading-video" src="assets/loading.mp4" autoplay muted playsinline></video>
-      <div class="loading-title">CANDY SURGE 1000</div>
+      <div class="loading-title">APEX LIMBO</div>
       <div class="loading-bar-track">
         <div class="loading-bar-fill" id="loadingBarFill"></div>
       </div>
@@ -23,9 +23,8 @@
   <div id="app">
     <!-- top bar -->
     <header class="topbar">
-      <div class="brand"><span class="brand-mark">▰</span> DEMO CASINO</div>
+      <div class="brand"><span class="brand-mark">▲</span> DEMO CASINO</div>
       <div class="topbar-right">
-        <a class="other-demo" href="limbo/index.html">Apex Limbo →</a>
         <div class="balance-pill">
           <span class="balance-label">Balance</span>
           <span id="balance">$0.00</span>
@@ -47,7 +46,6 @@
           <div class="field">
             <div class="field-head">
               <label for="betInput">Bet Amount</label>
-              <span class="muted">Cost <b id="betCost">$1.00</b></span>
             </div>
             <div class="bet-row">
               <input id="betInput" type="number" step="0.01" min="0.10" max="100" value="1.00">
@@ -60,19 +58,30 @@
             </div>
           </div>
 
-          <div class="field">
-            <button id="anteToggle" class="ante">
-              <span class="ante-knob"></span>
-              <span class="ante-text"><b>Double Chance</b><small>×1.31 bet · 2× bonus chance</small></span>
-            </button>
+          <div class="field two-col">
+            <div class="col">
+              <div class="field-head"><label for="targetInput">Target Multiplier</label></div>
+              <input id="targetInput" type="number" step="0.01" min="1.01" value="2.00">
+            </div>
+            <div class="col">
+              <div class="field-head"><label for="chanceInput">Win Chance</label></div>
+              <div class="unit-input"><input id="chanceInput" type="number" step="0.01" min="0.000099" max="98.019802" value="49.5"><span>%</span></div>
+            </div>
+          </div>
+
+          <div class="bet-row quick-targets" id="quickTargets"></div>
+
+          <div class="field payout-field">
+            <span>Payout on win</span>
+            <b id="payoutOut">$2.00</b>
           </div>
 
           <div class="field">
-            <button id="btnBuy" class="buy-btn">★ Bonus Buy</button>
+            <button id="btnBonus" class="buy-btn">★ Bonus Buy</button>
           </div>
 
           <div id="manualPane">
-            <button id="btnSpin" class="spin-btn">Bet</button>
+            <button id="btnBet" class="spin-btn">Bet</button>
           </div>
 
           <div id="autoPane" style="display:none">
@@ -86,6 +95,38 @@
                 <button class="mini-btn" data-auto="inf">∞</button>
               </div>
             </div>
+
+            <div class="field">
+              <div class="field-head"><label>On Win</label></div>
+              <div class="seg-row">
+                <button type="button" class="seg-btn active" data-onwin="reset">Reset</button>
+                <button type="button" class="seg-btn" data-onwin="increase">Increase by</button>
+                <input id="onWinPct" type="number" min="0" max="1000" step="1" value="0" disabled>
+                <span class="seg-suffix">%</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-head"><label>On Loss</label></div>
+              <div class="seg-row">
+                <button type="button" class="seg-btn active" data-onloss="reset">Reset</button>
+                <button type="button" class="seg-btn" data-onloss="increase">Increase by</button>
+                <input id="onLossPct" type="number" min="0" max="1000" step="1" value="0" disabled>
+                <span class="seg-suffix">%</span>
+              </div>
+            </div>
+
+            <div class="field two-col">
+              <div class="col">
+                <div class="field-head"><label for="stopProfit">Stop on Profit ≥</label></div>
+                <input id="stopProfit" type="number" min="0" step="0.01" placeholder="0.00">
+              </div>
+              <div class="col">
+                <div class="field-head"><label for="stopLoss">Stop on Loss ≥</label></div>
+                <input id="stopLoss" type="number" min="0" step="0.01" placeholder="0.00">
+              </div>
+            </div>
+
             <button id="btnAutoStart" class="spin-btn">Start Autoplay</button>
           </div>
 
@@ -94,7 +135,8 @@
             <div class="icon-row">
               <button id="btnTurbo" class="icon-btn" title="Turbo">⚡</button>
               <button id="btnSound" class="icon-btn" title="Sound">🔊</button>
-              <button id="btnInfo" class="icon-btn" title="Paytable &amp; rules">ⓘ</button>
+              <button id="btnFair" class="icon-btn" title="Provably fair">🔒</button>
+              <button id="btnInfo" class="icon-btn" title="Rules">ⓘ</button>
             </div>
           </div>
           <p id="statusLine" class="status">Loading…</p>
@@ -110,45 +152,111 @@
       <footer class="game-footer">
         <div class="pub-logo" title="Publisher logo placeholder">PUBLISHER<br>LOGO</div>
         <div class="footer-mid">
-          <b>CANDY SURGE 1000</b>
-          <span>RTP 96.5% · Max win 25,000× · 7×7 Cluster Tumble</span>
+          <b>APEX LIMBO</b>
+          <span>RTP 99% · House edge 1% · Target 1.01×–1,000,000×</span>
         </div>
         <div class="footer-right">
           <span>Demo build · No real money</span>
-          <span class="muted">Deterministic math/playback separation</span>
+          <span class="muted">Provably fair (HMAC-SHA256)</span>
         </div>
       </footer>
     </main>
   </div>
 
   <!-- bonus buy modal -->
-  <div id="buyModal" class="modal">
-    <div class="modal-card">
+  <div id="bonusModal" class="modal">
+    <div class="modal-card wide">
       <div class="modal-head">
         <h2>Bonus Buy</h2>
-        <button id="buyClose" class="icon-btn">✕</button>
+        <button id="bonusClose" class="icon-btn">✕</button>
       </div>
-      <div class="buy-cards">
-        <div class="buy-card">
-          <h3>FREE SPINS</h3>
-          <p>Buy directly into <b>10+ Free Spins</b>. Multiplier spots stick for the whole bonus and double up to <b>×1024</b>.</p>
-          <div class="buy-price" id="buyCost">$100.00</div>
-          <div class="buy-mult">100× bet</div>
-          <button id="buyConfirm" class="spin-btn">Buy Free Spins</button>
+      <div class="bonus-cards">
+        <div class="bonus-card">
+          <div class="bonus-tag">Accessible</div>
+          <h3>RUSH MODE</h3>
+          <p class="muted small">Speed &amp; accumulation</p>
+          <p id="rushDesc">10 rapid-fire shots at your Target Multiplier.</p>
+          <div class="bonus-price" id="rushCost">$10.00</div>
+          <div class="bonus-mult">10× bet</div>
+          <button id="rushConfirm" class="spin-btn">Fire Rush Mode</button>
         </div>
-        <div class="buy-card super">
-          <h3>SUPER FREE SPINS</h3>
-          <p>Free Spins that start with <b>random multiplier spots pre-placed</b>, and every new spot lands as <b>×2 instantly</b>.</p>
-          <div class="buy-price" id="superBuyCost">$525.00</div>
-          <div class="buy-mult">525× bet</div>
-          <button id="superBuyConfirm" class="spin-btn gold">Buy Super Spins</button>
+        <div class="bonus-card premium">
+          <div class="bonus-tag">Premium</div>
+          <h3>TRIPLE SHOT</h3>
+          <p class="muted small">One flight, three escalating gates</p>
+          <p>One draw, three gates at <b>1× / 10× / 100×</b> your starting target. Clearing a gate banks its prize <i>on top of</i> the one before it.</p>
+          <div class="field">
+            <div class="field-head"><label for="tripleStartInput">Starting Target</label></div>
+            <input id="tripleStartInput" type="number" step="0.01" min="2" max="900" value="10">
+          </div>
+          <div class="bet-row quick-targets" id="tripleStartPresets"></div>
+          <p id="tripleDesc" class="muted small">Gates: 10× / 100× / 1,000×</p>
+          <div class="bonus-price" id="tripleCost">$3.00</div>
+          <div class="bonus-mult">3× bet, always</div>
+          <button id="tripleConfirm" class="spin-btn gold">Fire Triple Shot</button>
+        </div>
+        <div class="bonus-card extreme">
+          <div class="bonus-tag">Extreme</div>
+          <h3>JACKPOT SHOT</h3>
+          <p class="muted small">One shot at something enormous</p>
+          <p id="jackpotDesc">MIN WIN 25× · MAX WIN 100,000× — one draw, no wheel.</p>
+          <div class="bonus-price" id="jackpotCost">$9.29</div>
+          <div class="bonus-mult">9.29× bet</div>
+          <button id="jackpotConfirm" class="spin-btn pink">Fire Jackpot Shot</button>
         </div>
       </div>
-      <p class="muted small">Bonus Buy is unavailable while Double Chance is active.</p>
+      <p class="muted small">All three bonuses draw from the exact same provably-fair engine as a normal bet — see the 🔒 panel to verify any of them.</p>
     </div>
   </div>
 
-  <!-- info / paytable modal -->
+  <!-- provably fair modal -->
+  <div id="fairModal" class="modal">
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <h2>Provably Fair</h2>
+        <button id="fairClose" class="icon-btn">✕</button>
+      </div>
+      <div class="info-scroll">
+        <p class="muted">
+          Every result is derived from <code>HMAC-SHA256(serverSeed, clientSeed:nonce)</code>.
+          The server seed's hash is published <b>before</b> you bet against it, so it can't be
+          changed after the fact; rotating it reveals the seed so every past bet can be
+          independently recomputed and checked against its committed hash.
+        </p>
+
+        <div class="fair-grid">
+          <label>Active server seed (hashed)</label>
+          <input id="fairServerHash" type="text" readonly>
+
+          <label>Client seed</label>
+          <div class="unit-input wide"><input id="fairClientSeed" type="text"><button id="fairNewClient" class="mini-btn">🎲</button></div>
+
+          <label>Next nonce</label>
+          <input id="fairNonce" type="text" readonly>
+        </div>
+
+        <button id="fairRotate" class="mini-btn wide">Rotate Server Seed (reveals current seed)</button>
+        <div id="fairRevealed" class="fair-revealed" style="display:none">
+          <b>Revealed seed:</b> <span id="fairRevealedSeed"></span>
+          <p class="muted small">Anyone can now recompute every bet placed under it with the formula above and match it to the hash shown at the time.</p>
+        </div>
+
+        <h3>Verify a result</h3>
+        <div class="fair-grid">
+          <label>Server seed</label>
+          <input id="verifyServer" type="text" placeholder="paste a revealed server seed">
+          <label>Client seed</label>
+          <input id="verifyClient" type="text">
+          <label>Nonce</label>
+          <input id="verifyNonce" type="number" value="0" min="0">
+        </div>
+        <button id="verifyRun" class="mini-btn wide">Compute result</button>
+        <div id="verifyOut" class="fair-revealed" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- info / rules modal -->
   <div id="infoModal" class="modal">
     <div class="modal-card wide">
       <div class="modal-head">
@@ -158,26 +266,36 @@
       <div class="info-scroll">
         <h3>How to play</h3>
         <ul>
-          <li><b>7×7 grid, cluster pays:</b> land 5 or more matching symbols connected horizontally or vertically.</li>
-          <li><b>Tumble:</b> winning symbols pop, the rest fall down and new candies drop in. Tumbles continue while new wins form.</li>
-          <li><b>Multiplier spots:</b> every win leaves a mark on its cells. A second win on a marked cell turns it into a <b>×2</b> spot; each further win doubles it, up to <b>×1024</b>. A cluster's win is multiplied by the <b>sum</b> of spot values beneath it.</li>
-          <li><b>Free Spins:</b> 3, 4, 5, 6, 7 Crystal Cubes award 10, 12, 14, 16, 18 free spins. Marks and multiplier spots <b>persist for the entire bonus</b>. 3+ scatters during the bonus award +10 extra spins.</li>
-          <li><b>Double Chance:</b> pay ×1.31 per bet to double the chance of triggering free spins.</li>
-          <li><b>Bonus Buy / Super Bonus Buy:</b> buy free spins for 100× bet, or super free spins (pre-placed multipliers, spots start at ×2) for 525× bet.</li>
-          <li><b>Max win:</b> 25,000× bet. The round ends immediately when the cap is reached.</li>
+          <li>Pick a <b>Target Multiplier</b> (or set a <b>Win Chance %</b> — they're linked) and place your bet.</li>
+          <li>A provably-fair result multiplier is generated. If it's <b>≥ your target</b>, you win <b>bet × target</b>. Otherwise you lose the bet.</li>
+          <li><b>Win Chance</b> = 99% ÷ target. Lower targets win more often for a smaller payout; higher targets pay big but hit rarely — same expected return either way.</li>
+          <li><b>Autoplay</b> can adjust your bet after each win/loss by a percentage, and stop automatically once a profit or loss threshold is reached.</li>
         </ul>
-        <h3>Paytable <span class="muted small">(× bet, by cluster size)</span></h3>
-        <div id="paytableGrid"></div>
-        <h3>RTP</h3>
-        <p class="muted">Target RTP 96.5%. Simulated averages: Base ~96.7% · Double Chance ~95.8% · Bonus Buy ~96.7% · Super Bonus Buy ~96.4% (fat-tailed math — see README for the full multi-seed range). Demo entertainment build — no real-money play.</p>
+        <h3>Bonus Buy</h3>
+        <ul>
+          <li><b>Rush Mode</b> (accessible) — buys 10 rapid-fire shots at your current Target Multiplier. It's exactly 10 independent normal bets fired back to back; cost = 10× bet, same RTP as a normal bet.</li>
+          <li><b>Triple Shot</b> (premium) — one draw, three escalating gates at your chosen starting target × 1 / 10 / 100. Clearing a gate banks its own prize on top of any earlier one — the highest gate you clear, the more you've already banked underneath it. Your starting target (2×–900×) is the risk dial: pick it higher for a bigger, rarer payout. Cost is always 3× bet, and — because the gate values cancel out mathematically — RTP is exactly 99% for every possible starting target.</li>
+          <li><b>Jackpot Shot</b> (extreme) — buys one single draw with a disclosed prize range (MIN WIN 25× – MAX WIN 100,000×). Below the minimum it's a miss; at or above it, the draw's own value (capped at the maximum) becomes the payout — no separate prize table or wheel, just one provably-fair number.</li>
+          <li>All three reuse the exact same <code>HMAC-SHA256</code> draw as a normal bet — see the fairness panel to verify any bonus round the same way you'd verify a normal one.</li>
+        </ul>
+        <h3>Math</h3>
+        <p class="muted">
+          House edge <b>1%</b> → target RTP <b>99%</b> at every target multiplier (verified by
+          <code>tools/simulate.js</code> across thousands of random targets). Result multiplier is
+          floored to 2 decimal places and floored at 1.00× (an instant win at the lowest possible
+          target); the maximum target/result is 1,000,000×.
+        </p>
+        <h3>Fairness</h3>
+        <p class="muted">See the 🔒 Provably Fair panel — results use real HMAC-SHA256, not a cosmetic placeholder.</p>
+        <p class="muted small">Demo entertainment build — no real-money play, no RGS connection.</p>
       </div>
     </div>
   </div>
 
   <script src="js/loading.js"></script>
+  <script src="js/sha256.js"></script>
   <script src="js/config.js"></script>
   <script src="js/engine.js"></script>
-  <script src="js/symbols.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/renderer.js"></script>
   <script src="js/ui.js"></script>

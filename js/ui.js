@@ -1,9 +1,11 @@
 /* =========================================================================
- * CANDY SURGE 1000 — UI layer
+ * APEX LIMBO — UI layer
  *
- * Casino-shell controls: demo wallet, bet panel (manual/auto), double
- * chance ante, bonus buy modal, paytable/info modal, turbo & sound.
- * Talks to main.js through callbacks; never touches game math.
+ * Casino-shell controls: demo wallet, bet panel (manual/auto with bet
+ * adjustment + stop conditions), target/chance linkage, provably-fair panel,
+ * info modal, turbo & sound. Talks to main.js through callbacks; never
+ * touches game math directly (it only reads GameEngine.computeResult for
+ * the independent "Verify" tool, which is the whole point of that tool).
  * ========================================================================= */
 (function (g) {
   'use strict';
@@ -13,22 +15,49 @@
   function $(id) { return document.getElementById(id); }
 
   function UI(opts) {
-    this.onSpin = opts.onSpin;        // function(mode) -> Promise
+    this.onBet = opts.onBet;          // function(target, clientSeed) -> Promise<payoutAmount>
+    this.onBonus = opts.onBonus;      // function(mode, target, clientSeed, turbo) -> Promise<{payout, summary}>
+    this.engine = opts.engine;
     this.sfx = opts.sfx;
 
-    this.balance = parseFloat(localStorage.getItem('cs1000_balance'));
+    this.balance = parseFloat(localStorage.getItem('apex_limbo_balance'));
     if (!(this.balance > 0)) this.balance = CFG.startBalance;
+
     this.bet = CFG.bet.default;
-    this.ante = false;
+    this.target = CFG.target.default;
+    this.tripleTarget = CFG.bonusModes.tripleShot.startTarget.default;
     this.turbo = false;
     this.sound = true;
     this.busy = false;
-    this.auto = { active: false, remaining: 0 };
 
+    this.clientSeed = localStorage.getItem('apex_limbo_clientseed') || this.engine.suggestClientSeed();
+    localStorage.setItem('apex_limbo_clientseed', this.clientSeed);
+
+    // Restore the live (unrevealed) server seed + nonce across a reload —
+    // without this, a page refresh silently strands whatever seed was
+    // committed-but-not-yet-rotated, making every bet placed under it
+    // permanently unverifiable (its hash was shown, but the seed itself
+    // is gone). engine.serverSeed/nonce are plain public fields, so this
+    // is just a restore, not an API change to GameEngine.
+    var savedServerSeed = localStorage.getItem('apex_limbo_serverseed');
+    if (savedServerSeed) {
+      this.engine.serverSeed = savedServerSeed;
+      this.engine.nonce = parseInt(localStorage.getItem('apex_limbo_nonce'), 10) || 0;
+    }
+
+    this.auto = {
+      active: false, remaining: 0, count: CFG.auto.defaultCount,
+      onWinMode: 'reset', onWinPct: 0, onLossMode: 'reset', onLossPct: 0,
+      stopProfit: 0, stopLoss: 0, baseBet: CFG.bet.default, sessionPL: 0
+    };
+
+    this.buildQuickTargets();
+    this.buildTripleStartPresets();
     this.bind();
     this.renderBalance();
     this.renderBet();
-    this.buildPaytable();
+    this.renderTarget();
+    this.renderFairness();
   }
 
   var P = UI.prototype;
@@ -39,32 +68,95 @@
 
   P.renderBalance = function () {
     $('balance').textContent = this.fmt(this.balance);
-    localStorage.setItem('cs1000_balance', String(this.balance));
+    localStorage.setItem('apex_limbo_balance', String(this.balance));
   };
 
   P.renderBet = function () {
     $('betInput').value = this.bet.toFixed(2);
-    var cost = this.ante ? this.bet * CFG.betModes.ante.cost : this.bet;
-    $('betCost').textContent = this.fmt(cost);
-    $('buyCost').textContent = this.fmt(this.bet * CFG.betModes.buy.cost);
-    $('superBuyCost').textContent = this.fmt(this.bet * CFG.betModes.superbuy.cost);
+    this.renderPayout();
   };
 
   P.setBet = function (v) {
+    if (isNaN(v)) v = CFG.bet.default;
     v = Math.min(CFG.bet.max, Math.max(CFG.bet.min, v));
     this.bet = Math.round(v * 100) / 100;
     this.renderBet();
   };
 
+  P.renderPayout = function () {
+    $('payoutOut').textContent = this.fmt(this.bet * this.target);
+  };
+
+  P.renderTarget = function () {
+    $('targetInput').value = this.target.toFixed(2);
+    // Significant-figure formatting (not a fixed decimal count) so the
+    // value round-trips losslessly back to the same 0.01-stepped target if
+    // the player re-commits exactly what's shown, across the whole 5+
+    // order-of-magnitude chance range — a fixed .toFixed(4) was far too
+    // coarse at high targets (e.g. 1,000,000x displayed as "0.0001"
+    // round-tripped to 990,000x when re-entered; toPrecision(9) verified
+    // to round-trip exactly across the full [1.01, 1000000] target range).
+    $('chanceInput').value = CFG.chanceForTarget(this.target).toPrecision(9)
+      .replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+    this.renderPayout();
+    if (this.renderer) this.renderer.setTarget(this.target);
+  };
+
+  P.setTarget = function (v) {
+    if (isNaN(v)) v = CFG.target.default;
+    v = Math.min(CFG.target.max, Math.max(CFG.target.min, v));
+    this.target = Math.round(v * 100) / 100;
+    this.renderTarget();
+  };
+
+  P.setChance = function (pct) {
+    if (isNaN(pct) || pct <= 0) pct = CFG.chanceForTarget(CFG.target.default);
+    var maxChance = CFG.chanceForTarget(CFG.target.min);
+    var minChance = CFG.chanceForTarget(CFG.target.max);
+    pct = Math.min(maxChance, Math.max(minChance, pct));
+    this.setTarget(CFG.targetForChance(pct));
+  };
+
+  P.buildQuickTargets = function () {
+    var host = $('quickTargets');
+    var self = this;
+    CFG.quickTargets.forEach(function (t) {
+      var b = document.createElement('button');
+      b.className = 'mini-btn wide';
+      b.textContent = t + '×';
+      b.addEventListener('click', function () { self.sfx.click(); self.setTarget(t); });
+      host.appendChild(b);
+    });
+  };
+
+  P.buildTripleStartPresets = function () {
+    var host = $('tripleStartPresets');
+    var self = this;
+    CFG.bonusModes.tripleShot.startPresets.forEach(function (t) {
+      var b = document.createElement('button');
+      b.className = 'mini-btn wide';
+      b.textContent = t + '×';
+      b.addEventListener('click', function () { self.sfx.click(); self.setTripleTarget(t); });
+      host.appendChild(b);
+    });
+  };
+
+  P.setTripleTarget = function (v) {
+    var st = CFG.bonusModes.tripleShot.startTarget;
+    if (isNaN(v)) v = st.default;
+    v = Math.min(st.max, Math.max(st.min, v));
+    this.tripleTarget = Math.round(v * 100) / 100;
+    $('tripleStartInput').value = this.tripleTarget.toFixed(2);
+    this.renderBonusModal();
+  };
+
   P.setBusy = function (b) {
     this.busy = b;
-    $('btnSpin').disabled = b && !this.auto.active;
-    $('btnBuy').disabled = b || this.ante;
+    $('btnBet').disabled = b && !this.auto.active;
     $('betInput').disabled = b;
-    $('betHalf').disabled = b;
-    $('betDouble').disabled = b;
-    $('betMin').disabled = b;
-    $('betMax').disabled = b;
+    $('targetInput').disabled = b;
+    $('chanceInput').disabled = b;
+    $('btnBonus').disabled = b || this.auto.active;
     document.body.classList.toggle('busy', b);
   };
 
@@ -82,73 +174,112 @@
       $(id).addEventListener('click', function (e) { self.sfx.ensure(); self.sfx.click(); fn(e); });
     }
 
-    // tabs
     click('tabManual', function () { self.setTab(false); });
     click('tabAuto', function () { self.setTab(true); });
 
-    // bet controls
     click('betHalf', function () { self.setBet(self.bet / 2); });
     click('betDouble', function () { self.setBet(self.bet * 2); });
     click('betMin', function () { self.setBet(CFG.bet.min); });
     click('betMax', function () { self.setBet(CFG.bet.max); });
     $('betInput').addEventListener('change', function () {
-      var v = parseFloat($('betInput').value);
-      self.setBet(isNaN(v) ? CFG.bet.default : v);
+      self.setBet(parseFloat($('betInput').value));
     });
 
-    // ante toggle
-    click('anteToggle', function () {
-      self.ante = !self.ante;
-      $('anteToggle').classList.toggle('on', self.ante);
-      $('btnBuy').disabled = self.ante || self.busy;
-      self.renderBet();
-      self.message(self.ante
-        ? 'Double Chance on: bet ×1.31, free spins chance doubled.'
-        : 'Place your bet.');
+    $('targetInput').addEventListener('change', function () {
+      self.setTarget(parseFloat($('targetInput').value));
+    });
+    $('chanceInput').addEventListener('change', function () {
+      self.setChance(parseFloat($('chanceInput').value));
     });
 
-    // spin
-    click('btnSpin', function () { self.spin(self.ante ? 'ante' : 'base'); });
+    click('btnBet', function () { self.bet_(); });
     document.addEventListener('keydown', function (e) {
       if (e.code === 'Space' && !e.repeat) {
         e.preventDefault();
-        if (!self.busy && !self.auto.active && !self.modalOpen()) {
+        if (!self.busy && !self.modalOpen() && !self.auto.active) {
           self.sfx.ensure();
-          self.spin(self.ante ? 'ante' : 'base');
+          self.bet_();
         }
       }
     });
 
-    // autoplay
+    // autoplay bet count
     var autoButtons = document.querySelectorAll('[data-auto]');
     autoButtons.forEach(function (btn) {
       btn.addEventListener('click', function () {
         autoButtons.forEach(function (b) { b.classList.remove('active'); });
         btn.classList.add('active');
-        self.autoCount = btn.dataset.auto === 'inf' ? Infinity : parseInt(btn.dataset.auto, 10);
+        self.auto.count = btn.dataset.auto === 'inf' ? Infinity : parseInt(btn.dataset.auto, 10);
       });
     });
-    this.autoCount = 10;
+
+    // on win / on loss segmented controls
+    function bindSeg(attr, modeKey, pctInputId) {
+      var buttons = document.querySelectorAll('[data-' + attr + ']');
+      buttons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          buttons.forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          self.auto[modeKey] = btn.dataset[attr];
+          $(pctInputId).disabled = btn.dataset[attr] !== 'increase';
+        });
+      });
+      $(pctInputId).addEventListener('change', function () {
+        var v = Math.max(0, Math.min(CFG.auto.maxAdjustPct, parseFloat(this.value) || 0));
+        this.value = v;
+      });
+    }
+    bindSeg('onwin', 'onWinMode', 'onWinPct');
+    bindSeg('onloss', 'onLossMode', 'onLossPct');
+
     click('btnAutoStart', function () {
-      if (self.auto.active) { self.stopAuto(); return; }
-      self.auto.active = true;
-      self.auto.remaining = self.autoCount;
-      $('btnAutoStart').textContent = 'Stop Autoplay';
-      $('btnAutoStart').classList.add('stop');
-      self.autoLoop();
+      if (self.auto.active) { self.stopAuto('Stopped.'); return; }
+      self.startAuto();
     });
 
     // bonus buy modal
-    click('btnBuy', function () { self.openModal('buyModal'); });
-    click('buyClose', function () { self.closeModal('buyModal'); });
-    click('buyConfirm', function () { self.closeModal('buyModal'); self.spin('buy'); });
-    click('superBuyConfirm', function () { self.closeModal('buyModal'); self.spin('superbuy'); });
+    click('btnBonus', function () { self.renderBonusModal(); self.openModal('bonusModal'); });
+    click('bonusClose', function () { self.closeModal('bonusModal'); });
+    $('tripleStartInput').addEventListener('change', function () {
+      self.setTripleTarget(parseFloat($('tripleStartInput').value));
+    });
+    click('rushConfirm', function () { self.closeModal('bonusModal'); self.bonus_('rush'); });
+    click('tripleConfirm', function () { self.closeModal('bonusModal'); self.bonus_('tripleShot'); });
+    click('jackpotConfirm', function () { self.closeModal('bonusModal'); self.bonus_('jackpot'); });
+
+    // fairness modal
+    click('btnFair', function () { self.renderFairness(); self.openModal('fairModal'); });
+    click('fairClose', function () { self.closeModal('fairModal'); });
+    click('fairNewClient', function () {
+      self.clientSeed = self.engine.suggestClientSeed();
+      localStorage.setItem('apex_limbo_clientseed', self.clientSeed);
+      self.renderFairness();
+    });
+    $('fairClientSeed').addEventListener('change', function () {
+      self.clientSeed = this.value.trim() || self.engine.suggestClientSeed();
+      localStorage.setItem('apex_limbo_clientseed', self.clientSeed);
+      self.renderFairness();
+    });
+    click('fairRotate', function () {
+      var revealed = self.engine.rotateServerSeed();
+      $('fairRevealed').style.display = '';
+      $('fairRevealedSeed').textContent = revealed;
+      self.renderFairness();
+    });
+    click('verifyRun', function () {
+      var srv = $('verifyServer').value.trim();
+      var cli = $('verifyClient').value.trim();
+      var nonce = parseInt($('verifyNonce').value, 10) || 0;
+      if (!srv) { self.message('Paste a revealed server seed to verify.'); return; }
+      var result = g.GameEngine.computeResult(srv, cli, nonce, CFG.houseEdge, CFG.target.max);
+      $('verifyOut').style.display = '';
+      $('verifyOut').innerHTML = '<b>Result:</b> ' + result.toFixed(2) + '×';
+    });
 
     // info modal
     click('btnInfo', function () { self.openModal('infoModal'); });
     click('infoClose', function () { self.closeModal('infoModal'); });
 
-    // turbo & sound
     click('btnTurbo', function () {
       self.turbo = !self.turbo;
       $('btnTurbo').classList.toggle('on', self.turbo);
@@ -160,7 +291,6 @@
       $('btnSound').textContent = self.sound ? '🔊' : '🔇';
     });
 
-    // demo wallet reset
     click('btnReset', function () {
       self.balance = CFG.startBalance;
       self.renderBalance();
@@ -179,99 +309,169 @@
     $('autoPane').style.display = auto ? '' : 'none';
   };
 
-  P.modalOpen = function () {
-    return !!document.querySelector('.modal.open');
-  };
-
+  P.modalOpen = function () { return !!document.querySelector('.modal.open'); };
   P.openModal = function (id) { $(id).classList.add('open'); };
   P.closeModal = function (id) { $(id).classList.remove('open'); };
 
-  /* ---- spin orchestration -------------------------------------------------- */
-  P.spin = function (mode) {
+  P.renderFairness = function () {
+    $('fairServerHash').value = this.engine.serverSeedHash();
+    $('fairClientSeed').value = this.clientSeed;
+    $('fairNonce').value = String(this.engine.nonce);
+    // Called after every bet/bonus and right after a seed rotation, so this
+    // is also the natural place to keep the live seed+nonce persisted —
+    // see the restore in the constructor above.
+    localStorage.setItem('apex_limbo_serverseed', this.engine.serverSeed);
+    localStorage.setItem('apex_limbo_nonce', String(this.engine.nonce));
+  };
+
+  /* ---- bonus buy ------------------------------------------------------------ */
+  P.costMultiplierFor = function (mode) {
+    if (mode === 'rush') return CFG.rushCost();
+    if (mode === 'tripleShot') return CFG.tripleShotCost();
+    if (mode === 'jackpot') return CFG.bonusModes.jackpot.costMultiplier;
+    return 0;
+  };
+
+  P.renderBonusModal = function () {
+    var jackpot = CFG.bonusModes.jackpot;
+
+    $('rushDesc').textContent = CFG.bonusModes.rush.shots + ' rapid-fire shots at your Target Multiplier (' +
+      this.target.toFixed(2) + '×).';
+    $('rushCost').textContent = this.fmt(this.costMultiplierFor('rush') * this.bet);
+
+    $('tripleStartInput').value = this.tripleTarget.toFixed(2);
+    var gates = CFG.tripleShotGates(this.tripleTarget);
+    $('tripleDesc').textContent = 'Gates: ' + gates.map(function (g) { return g.toFixed(2) + '×'; }).join(' / ') +
+      '  ·  max total ' + (gates[0] + gates[1] + gates[2]).toFixed(2) + '×';
+    $('tripleCost').textContent = this.fmt(this.costMultiplierFor('tripleShot') * this.bet);
+
+    $('jackpotDesc').textContent = 'MIN WIN ' + jackpot.minWin + '× · MAX WIN ' +
+      jackpot.maxWin.toLocaleString() + '× — one draw, no wheel.';
+    $('jackpotCost').textContent = this.fmt(this.costMultiplierFor('jackpot') * this.bet);
+  };
+
+  P.bonus_ = function (mode) {
     var self = this;
-    if (this.busy) return Promise.resolve();
-    var cost = this.bet * CFG.betModes[mode].cost;
-    if (cost > this.balance + 1e-9) {
-      this.message('Insufficient demo balance — press ↺ to reset.');
-      this.stopAuto();
-      return Promise.resolve();
+    if (this.busy) return Promise.resolve(false);
+    var cost = this.costMultiplierFor(mode) * this.bet;
+    if (isNaN(cost) || cost > this.balance + 1e-9) {
+      this.message(isNaN(cost) ? 'Invalid bet amount.' : 'Insufficient demo balance for this bonus — press ↺ to reset.');
+      return Promise.resolve(false);
     }
     this.balance -= cost;
     this.renderBalance();
     this.win(0);
-    this.message(CFG.betModes[mode].label + ' — good luck!');
+    this.message(CFG.bonusModes[mode].label + ' — good luck!');
     this.setBusy(true);
 
-    return this.onSpin(mode).then(function (totalWin) {
-      self.balance += totalWin;
+    var modeTarget = mode === 'tripleShot' ? this.tripleTarget : this.target;
+    return this.onBonus(mode, modeTarget, this.clientSeed, this.turbo).then(function (result) {
+      self.balance += result.payout;
       self.renderBalance();
-      self.message(totalWin > 0
-        ? 'You won ' + self.fmt(totalWin) + '!'
-        : 'No win — spin again!');
+      self.renderFairness();
+      self.win(result.payout);
+      self.message(result.summary);
       self.setBusy(false);
+      return { win: result.payout > 0, profit: result.payout - cost };
     }).catch(function (err) {
       console.error(err);
       self.setBusy(false);
+      return { win: false, profit: -cost };
     });
+  };
+
+  /* ---- bet orchestration -------------------------------------------------- */
+  P.bet_ = function () {
+    var self = this;
+    if (this.busy) return Promise.resolve(false);
+    if (isNaN(this.bet) || this.bet > this.balance + 1e-9) {
+      this.message(isNaN(this.bet) ? 'Invalid bet amount.' : 'Insufficient demo balance — press ↺ to reset.');
+      this.stopAuto();
+      return Promise.resolve(false);
+    }
+    this.balance -= this.bet;
+    this.renderBalance();
+    this.win(0);
+    this.message('Rolling…');
+    this.setBusy(true);
+
+    var stake = this.bet;
+    return this.onBet(this.target, this.clientSeed, this.turbo).then(function (result) {
+      self.balance += result.payout;
+      self.renderBalance();
+      self.renderFairness();
+      self.message(result.win
+        ? 'Rolled ' + result.result.toFixed(2) + '× — you won ' + self.fmt(result.payout) + '!'
+        : 'Rolled ' + result.result.toFixed(2) + '× — bust, try again.');
+      self.setBusy(false);
+      return { win: result.win, profit: result.payout - stake };
+    }).catch(function (err) {
+      console.error(err);
+      self.setBusy(false);
+      return { win: false, profit: -stake };
+    });
+  };
+
+  /* ---- autoplay ------------------------------------------------------------ */
+  P.startAuto = function () {
+    this.auto.active = true;
+    this.auto.remaining = this.auto.count;
+    this.auto.baseBet = this.bet;
+    this.auto.sessionPL = 0;
+    $('btnAutoStart').textContent = 'Stop Autoplay';
+    $('btnAutoStart').classList.add('stop');
+    // Bonus Buy shares the same round-orchestration path as a normal bet
+    // (busy guard, balance debit/credit) but autoLoop doesn't know how to
+    // account for a bonus round — keep it out of reach for the whole
+    // autoplay session, not just mid-round, so it can never eat an
+    // autoplay "turn" with no bet placed.
+    $('btnBonus').disabled = true;
+    this.sfx.autoToggle(true);
+    this.autoLoop();
+  };
+
+  P.stopAuto = function (msg) {
+    this.auto.active = false;
+    $('btnAutoStart').textContent = 'Start Autoplay';
+    $('btnAutoStart').classList.remove('stop');
+    if (!this.busy) $('btnBonus').disabled = false;
+    this.sfx.autoToggle(false);
+    if (msg) this.message(msg);
   };
 
   P.autoLoop = function () {
     var self = this;
-    if (!this.auto.active || this.auto.remaining <= 0) { this.stopAuto(); return; }
+    if (!this.auto.active || this.auto.remaining <= 0) {
+      this.stopAuto(this.auto.active ? 'Autoplay complete.' : undefined);
+      return;
+    }
     this.auto.remaining--;
     $('btnAutoStart').textContent = 'Stop (' +
       (this.auto.remaining === Infinity ? '∞' : this.auto.remaining) + ')';
-    this.spin(this.ante ? 'ante' : 'base').then(function () {
-      if (self.auto.active) setTimeout(function () { self.autoLoop(); }, 450);
-    });
-  };
 
-  P.stopAuto = function () {
-    this.auto.active = false;
-    $('btnAutoStart').textContent = 'Start Autoplay';
-    $('btnAutoStart').classList.remove('stop');
-  };
+    this.bet_().then(function (outcome) {
+      if (!self.auto.active) return;
+      if (!outcome) { self.stopAuto('Autoplay stopped — the last bet could not be placed.'); return; }
+      self.auto.sessionPL += outcome.profit;
 
-  /* ---- paytable (info modal) ------------------------------------------------ */
-  P.buildPaytable = function () {
-    var host = $('paytableGrid');
-    var tiers = CFG.clusterTiers;
-    CFG.symbols.forEach(function (sym) {
-      var row = document.createElement('div');
-      row.className = 'pt-row';
-      var icon = document.createElement('canvas');
-      icon.width = icon.height = 56;
-      icon.getContext('2d').drawImage(g.SymbolArt.sprite(sym.id, 56), 0, 0, 56, 56);
-      row.appendChild(icon);
-      var tbl = document.createElement('div');
-      tbl.className = 'pt-vals';
-      var pays = CFG.paytable[sym.id];
-      var html = '<b>' + sym.name + '</b>';
-      for (var i = tiers.length - 1; i >= 0; i--) {
-        var label = (i === tiers.length - 1) ? tiers[i] + '+' :
-          (tiers[i + 1] - tiers[i] > 1 ? tiers[i] + '–' + (tiers[i + 1] - 1) : '' + tiers[i]);
-        html += '<span>' + label + ': <em>' + pays[i] + '×</em></span>';
+      var mode = outcome.win ? self.auto.onWinMode : self.auto.onLossMode;
+      var pct = outcome.win ? parseFloat($('onWinPct').value) || 0 : parseFloat($('onLossPct').value) || 0;
+      self.setBet(mode === 'increase' ? self.bet * (1 + pct / 100) : self.auto.baseBet);
+
+      var stopProfit = parseFloat($('stopProfit').value) || 0;
+      var stopLoss = parseFloat($('stopLoss').value) || 0;
+      if (stopProfit > 0 && self.auto.sessionPL >= stopProfit) {
+        self.stopAuto('Autoplay stopped — profit target reached (' + self.fmt(self.auto.sessionPL) + ').');
+        return;
       }
-      tbl.innerHTML = html;
-      row.appendChild(tbl);
-      host.appendChild(row);
+      if (stopLoss > 0 && -self.auto.sessionPL >= stopLoss) {
+        self.stopAuto('Autoplay stopped — loss limit reached (' + self.fmt(-self.auto.sessionPL) + ').');
+        return;
+      }
+      if (self.auto.active) {
+        setTimeout(function () { self.autoLoop(); }, self.turbo ? CFG.auto.delayMs * 0.4 : CFG.auto.delayMs);
+      }
     });
-    // scatter row
-    var srow = document.createElement('div');
-    srow.className = 'pt-row';
-    var sicon = document.createElement('canvas');
-    sicon.width = sicon.height = 56;
-    sicon.getContext('2d').drawImage(g.SymbolArt.sprite('scatter', 56), 0, 0, 56, 56);
-    srow.appendChild(sicon);
-    var sd = document.createElement('div');
-    sd.className = 'pt-vals';
-    var shtml = '<b>' + CFG.scatter.name + ' (Scatter)</b>';
-    [7, 6, 5, 4, 3].forEach(function (n) {
-      shtml += '<span>' + (n === 7 ? '7+' : n) + ': <em>' + CFG.scatterPays[n] + '×</em></span>';
-    });
-    sd.innerHTML = shtml;
-    srow.appendChild(sd);
-    host.appendChild(srow);
   };
 
   g.UI = UI;

@@ -1,5 +1,5 @@
 /* =========================================================================
- * CANDY SURGE 1000 — loading screen
+ * APEX LIMBO — loading screen
  *
  * The progress bar is driven directly by the loading video's own playback
  * position (currentTime / duration), so the bar and the video are literally

@@ -1,39 +1,24 @@
-# Demo casino games
+# APEX LIMBO 🚀
 
-Two original, zero-dependency casino-style demos live in this repo:
+A **Limbo-style** demo game: pick a target multiplier (or a win chance %),
+place a bet, and a provably-fair result multiplier is generated. Clear your
+target and you win **bet × target**; fall short and you lose the bet. Built
+with zero dependencies — the stage art is drawn procedurally on canvas and
+all audio is synthesized with WebAudio. The one exception is a branded
+loading screen video (`assets/loading.mp4`, `js/loading.js`): it plays once
+behind a progress bar driven by the video's own playback position, then
+reveals the game.
 
-- **[Candy Surge 1000](index.html)** — a 7×7 cluster-pays tumble slot (below)
-- **[Apex Limbo](limbo/index.html)** — a provably-fair target-multiplier game ([details](limbo/README.md))
-
-Both are original games (own name, art, math and code) built for the same
-demo/education purpose — neither is a copy of, or affiliated with, any
-specific commercial casino's game.
-
-Both also share a loading screen (`assets/loading.mp4`, `js/loading.js`): a
-branded intro video plays once behind a progress bar that's driven by the
-video's own playback position, then the game is revealed. This is the one
-binary asset in the repo — everything else below is still procedural/
-synthesized.
-
----
-
-# CANDY SURGE 1000 🍬
-
-A high-volatility **7×7 cluster-pays tumble slot** demo with sticky doubling
-multiplier spots (up to **×1024**), free spins, Double Chance ante, Bonus Buy /
-Super Bonus Buy, and a **25,000× max win** — wrapped in a dark casino-style
-shell. Built with zero dependencies: all symbol art is drawn procedurally on
-canvas and all audio is synthesized with WebAudio — the one exception is the
-shared branded loading screen video (see above).
-
-> **Original game.** Mechanics belong to the well-known "tumble + multiplier
-> spots" genre, but the name, theme, symbols, artwork, sounds and code are all
-> original. A **publisher logo placeholder** is included in the game canvas
-> (bottom-left) and the game footer — drop your studio mark in both places.
+> **Original game.** "Limbo" (target-multiplier, provably-fair) is a
+> well-known casino-game genre implemented by many platforms — the name,
+> theme, art, sounds and code here are original, and this project is **not
+> affiliated with, endorsed by, or a copy of any specific commercial
+> casino's game.** A **publisher logo placeholder** is included in the
+> footer — drop your studio mark in.
 
 ## Run it
 
-No build step. Serve the folder (or just open `index.html`):
+No build step. Serve the repo root (or just open `index.html`):
 
 ```bash
 python3 -m http.server 8000
@@ -44,78 +29,144 @@ python3 -m http.server 8000
 
 | Feature | Detail |
 | --- | --- |
-| Grid | 7×7, cluster pays (5+ matching symbols connected horizontally/vertically) |
-| Tumble | Winning clusters pop; symbols fall and refill until no new wins |
-| Multiplier spots | Wins mark their cells. 2nd hit on a mark → ×2, doubling each further hit up to **×1024**. A cluster's pay is multiplied by the **sum** of spot values under it. Marks reset each base-game spin, **persist for the whole bonus** |
-| Free spins | 3/4/5/6/7 scatters → 10/12/14/16/18 spins; 3+ scatters in the bonus → +10 spins; scatters also pay 2–200× |
-| Double Chance | ×1.31 bet, ~2× free-spins trigger frequency (base game only; disables Bonus Buy) |
-| Bonus Buy | 100× bet → guaranteed free spins trigger |
-| Super Bonus Buy | 525× bet → free spins with pre-placed multiplier spots **and** every new mark lands as ×2 instantly |
-| Max win | 25,000× bet — the round ends immediately at the cap |
-| Target RTP | 96.5% |
+| Target | Choose any multiplier from **1.01×** to **1,000,000×** (or set a win-chance % — the two are linked) |
+| Result | A provably-fair multiplier is generated for the bet; result ≥ target = **win** |
+| Payout | `bet × target` on a win, `0` on a bust |
+| Win chance | `(1 − house edge) ÷ target` — lower targets hit more often for a smaller payout, higher targets hit rarely for a bigger one; **expected return is the same at every target** |
+| House edge | 1% → **99% RTP**, constant across the entire target range |
+| Autoplay | Number of bets, on-win/on-loss bet adjustment (reset or increase by %), stop-on-profit and stop-on-loss thresholds |
+| Apex Win | Cosmetic-only celebration when a win clears its target by 5×+ — no effect on math |
+| Bonus Buy | Rush Mode, Triple Shot, Jackpot Shot — see below |
 
-## Architecture — Stake Engine alignment
+## Bonus Buy modes
 
-The codebase deliberately mirrors the separation that
-[Stake Engine](https://stake-engine.com/docs) enforces between its
-[math-sdk](https://stakeengine.github.io/math-sdk/) and web-sdk:
+Three Bonus Buy options (🎯 Bonus Buy button), each built to answer a
+different player desire rather than being three skins on one mechanic. All
+three still draw from the exact same `computeResult()` HMAC-SHA256 draw a
+normal bet uses — they just take more than one draw, or spend the one draw
+differently — so every shot in every bonus is independently verifiable the
+same way a normal bet is (🔒 panel / `tools/verify_fairness.js`).
 
-```
-js/config.js    math configuration (paytable, weights, bet modes, caps)
-js/engine.js    math engine — produces a complete, ordered EVENT BOOK per
-                round; deterministic via seedable RNG; runs in Node + browser
-js/renderer.js  playback only: animates the book, never computes outcomes
-js/ui.js        casino shell: wallet, bet panel, autoplay, modals
-js/symbols.js   procedural symbol sprites (cached canvas art)
-js/audio.js     WebAudio-synthesized SFX
-tools/          math verification (run with Node)
-```
+**Payout convention (locked):** every mode's `×` figures — Rush's per-shot
+target, Triple Shot's gates, Jackpot's MIN/MAX WIN — are multiples of the
+**base unit bet**, never of that mode's feature-buy cost. A Triple Shot
+TRIPLE HIT at `T=10×` pays `1,110 × bet`, the same bet used to compute the
+3× cost, not `1,110 × (3×bet)`. This matches how a normal bet already works
+and keeps every mode's numbers directly comparable.
 
-Policy-relevant properties:
+| Mode | Volatility | What you buy | Cost | Math |
+| --- | --- | --- | --- | --- |
+| **Rush Mode** (accessible) | Medium-High | 10 rapid-fire shots at your current Target Multiplier | 10× bet | Literally 10 independent normal bets, fired back to back — RTP-neutral by construction (99%) |
+| **Triple Shot** (premium) | High | 1 draw, 3 escalating prize gates at your chosen starting target × 1/10/100 | 3× bet | Payout = sum of every gate the one draw cleared — RTP-neutral by construction (99%, exactly, for any starting target) |
+| **Jackpot Shot** (extreme) | Extreme | 1 draw against a disclosed prize range — MIN WIN 25×, MAX WIN 100,000× | 9.29× bet | Below MIN WIN: miss (payout 0). At/above MIN WIN: the draw's *own value*, clamped to MAX WIN, **is** the payout — no separate prize table or wheel |
 
-- **Cluster win evaluation** — one of the four evaluation types Stake Engine
-  supports (`lines | ways | cluster | scatter`).
-- **Outcome/presentation separation** — the engine emits a self-contained
-  result book (reveal → win → tumble → … → roundEnd); the frontend replays it,
-  exactly like web-sdk playback of RGS books. Swapping the local engine for
-  RGS `/play` responses is a transport change, not a redesign.
-- **Configured max win cap** — wins clamp at 25,000× and the round terminates,
-  matching the engine-level `maxWinX` cap requirement.
-- **Deterministic, seedable math** — books are reproducible for testing
-  (`new GameEngine(seed)`), the analogue of forced/simulated results.
-- **Verified math** — `tools/simulate.js` plays 100k+ rounds per mode
-  (the volume Stake Engine recommends for production math):
+**Rush Mode** reuses your Target Multiplier field directly — it's not a
+separate setting. The stage reveals shots as a rapid ticker (not a wait for
+one projectile to finish before the next fires) with a live `SHOT n/10 · HITS
+h · WIN x×` readout, ending on a `RUSH COMPLETE` summary.
+
+**Triple Shot** is ONE draw, not three. You pick a starting target `T`
+(2×–900×, via number input or preset buttons); the feature derives three
+gates at `T`, `10T`, `100T`. One projectile launches — how far the single
+result climbs decides how many gates it clears, and clearing a gate banks
+its own prize **on top of** any earlier one (crossing `100T` implies `10T`
+and `T` were already crossed, since the gates are strictly increasing):
+
+| Result vs. gates (T = 10×) | Payout |
+| --- | --- |
+| < 10× | 0× |
+| ≥ 10×, < 100× | 10× |
+| ≥ 100×, < 1,000× | 10× + 100× = 110× |
+| ≥ 1,000× | 10× + 100× + 1,000× = 1,110× — **TRIPLE HIT** |
+
+The elegant part: payout(result) = Σ gate × 𝟙[result ≥ gate], so by
+linearity `E[payout] = Σ gate × P(result≥gate) = Σ gate × (1−houseEdge)/gate
+= 3×(1−houseEdge)` — the gate values cancel out completely. RTP is
+**exactly** 99% at every possible starting target, provably, not just
+approximately — `startTarget` is purely a volatility dial (higher target =
+rarer, bigger cumulative payout, same expected return). Max total payout is
+`111×T`, so the target selector is capped at 900× (111 × 900 = 99,900×,
+under the game's 1,000,000× result ceiling). "TRIPLE HIT" is a cosmetic
+label on the same plain summed payout, same as the other modes' win labels.
+
+**Jackpot Shot** is the one genuinely different payout shape: because the
+underlying result distribution is already heavy-tailed (the same one every
+normal bet uses), conditioning on "at least MIN WIN" and capping at MAX WIN
+naturally puts most winning draws near the low end with progressively rarer
+huge ones — no artificial weighting needed. Its cost (9.29× bet) is
+calibrated **analytically**, not by naive Monte Carlo: a single MAX WIN hit
+is roughly 1-in-101,000, so a simulated RTP reading needs tens of millions
+of rounds before it stops swinging ~50% run to run (see the fat-tail warning
+`tools/simulate_bonus.js` prints). The exact expected payout — and thus the
+exact cost for a chosen RTP — comes from closed-form/numerical integration
+instead:
 
 ```bash
-node tools/simulate.js 200000   # RTP / hit rate / bonus freq / distribution
-node tools/verify_book.js       # event-book contract checks (20k rounds)
-node tools/smoke_render.js      # headless renderer playback test
+node tools/jackpot_integral.js        # exact calibration, no RNG variance
+node tools/simulate_bonus.js 500000   # RTP check for all 3 modes (Jackpot's reading is noisy — expected)
 ```
 
-Latest results, 3×1.5M-round independent seeds per mode post-QA-fixes
-(fat-tailed math for Base/Double Chance — see the multi-seed spread, not a
-single point estimate; Bonus Buy/Super Bonus Buy trigger every round so
-their reading is far tighter):
+## Provably fair — for real
 
-| Mode | Cost | Simulated RTP (3-seed range) | Notes |
-| --- | --- | --- | --- |
-| Base | 1× | 95.4–97.5% (avg ~96.7%) | hit rate ~58%, bonus ~1 in 290 |
-| Double Chance | 1.31× | 95.5–96.1% (avg ~95.8%) | bonus ~1 in 150, i.e. ~1.94× base — recalibrated cost (was 1.25×; see QA notes below) |
-| Bonus Buy | 100× | 95.9–97.1% (avg ~96.7%) | |
-| Super Bonus Buy | 525× | 95.8–97.2% (avg ~96.4%) | recalibrated cost (was 500×; see QA notes below) |
+Unlike a purely cosmetic "fairness" badge, this demo implements the actual
+scheme (`js/sha256.js`, `js/engine.js`):
 
-**QA history:** an audit found two real bugs affecting these numbers,
-both fixed — (1) `anteScatterMult` was set to 1.20 instead of the 1.26 the
-code's own comment derived, delivering only a ~1.65× bonus-frequency boost
-against the documented "2× bonus chance"; (2) forced-scatter rounds (Bonus
-Buy/Super Bonus Buy) could pick up *extra* scatters during their tumble
-cascade beyond what was forced, inflating both modes' RTP — Super Bonus Buy
-ran with a **negative house edge (>100% RTP)** before this fix. Once fixed,
-Double Chance's corrected 2× frequency legitimately raised its average win
-enough that its original 1.25× cost also needed recalibrating (to 1.31×) to
-land back on target — the same happened for Super Bonus Buy's cost
-(500×→525×) after its own bug fix. See `js/engine.js` and `js/config.js`
-comments for the full derivation of each recalibrated number.
+1. The engine holds a secret **server seed** and immediately publishes its
+   **SHA-256 hash** — a commitment made *before* any bet, so it can't be
+   changed after the fact to influence a result.
+2. Each bet combines that server seed with your **client seed** and an
+   incrementing **nonce** through **HMAC-SHA256**. The first 52 bits of the
+   HMAC become a uniform float, mapped to a result multiplier:
 
-**Demo entertainment build — no real-money play, no RGS connection.** The
-demo wallet is local only (resettable with ↺).
+   ```
+   result = floor( (1 − houseEdge) / (1 − r) × 100 ) / 100,  clamped to [1.00, 1000000]
+   ```
+
+3. Rotating the server seed (🔒 Provably Fair panel) reveals the seed that
+   was just retired, so every bet placed under it can be recomputed with the
+   formula above and matched against the hash that was shown at the time.
+   The same panel has a **Verify** tool that recomputes any
+   `(serverSeed, clientSeed, nonce)` triple client-side.
+
+This is a genuine SHA-256/HMAC-SHA256 implementation (no `crypto` library
+dependency, so it runs the same in the browser and in Node), checked against
+the standard NIST SHA-256 vectors and RFC 4231's HMAC test case:
+
+```bash
+node tools/verify_fairness.js
+```
+
+It is still a **local-only demo**: there is no server, no RGS, and the demo
+wallet lives in `localStorage` (resettable with ↺). Nothing here is wired to
+real money.
+
+## Math verification
+
+```bash
+node tools/simulate.js 500000   # RTP across random + fixed targets
+```
+
+Fixed-target sweeps track the theoretical win chance almost exactly (e.g.
+~49.5% at 2×, ~9.9% at 10×, ~0.99% at 100×), which is what you'd expect from
+`chance = 99 / target` — RTP is architecturally constant at 99% regardless
+of the target chosen. The random-target RTP figure in that same run carries
+much more variance: at high targets a single very rare, very large win can
+swing an all-target average well off 99% over a few hundred thousand
+trials — that's the shape of this game's payout distribution, not a bug
+(the fixed-target numbers are the trustworthy check).
+
+## Architecture
+
+Math and presentation stay cleanly split:
+
+```
+js/sha256.js    pure-JS SHA-256 / HMAC-SHA256 (no dependencies)
+js/config.js    math configuration (house edge, target range, bet limits, bonus modes)
+js/engine.js    provably-fair round math; playBet + playRush/playTripleShot/playJackpot; runs in Node + browser
+js/renderer.js  playback only: animates the count-up (and the 3 bonus scenes), never decides outcomes
+js/ui.js        casino shell: wallet, bet panel, autoplay, bonus buy modal, fairness panel
+js/audio.js     WebAudio-synthesized SFX
+tools/          math + fairness verification (run with Node), incl. bonus RTP + Jackpot calibration
+```
+
+**Demo entertainment build — no real-money play, no RGS connection.**
