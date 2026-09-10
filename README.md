@@ -9,6 +9,12 @@ Both are original games (own name, art, math and code) built for the same
 demo/education purpose — neither is a copy of, or affiliated with, any
 specific commercial casino's game.
 
+Both also share a loading screen (`assets/loading.mp4`, `js/loading.js`): a
+branded intro video plays once behind a progress bar that's driven by the
+video's own playback position, then the game is revealed. This is the one
+binary asset in the repo — everything else below is still procedural/
+synthesized.
+
 ---
 
 # CANDY SURGE 1000 🍬
@@ -16,8 +22,9 @@ specific commercial casino's game.
 A high-volatility **7×7 cluster-pays tumble slot** demo with sticky doubling
 multiplier spots (up to **×1024**), free spins, Double Chance ante, Bonus Buy /
 Super Bonus Buy, and a **25,000× max win** — wrapped in a dark casino-style
-shell. Built with zero dependencies and zero binary assets: all symbol art is
-drawn procedurally on canvas and all audio is synthesized with WebAudio.
+shell. Built with zero dependencies: all symbol art is drawn procedurally on
+canvas and all audio is synthesized with WebAudio — the one exception is the
+shared branded loading screen video (see above).
 
 > **Original game.** Mechanics belong to the well-known "tumble + multiplier
 > spots" genre, but the name, theme, symbols, artwork, sounds and code are all

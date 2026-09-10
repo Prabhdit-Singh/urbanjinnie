@@ -17,6 +17,69 @@
 
 * { box-sizing: border-box; }
 
+/* ---- loading screen ------------------------------------------------------ */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #14232f 0%, #0a1219 100%);
+  transition: opacity 0.5s ease;
+}
+
+.loading-screen.loading-done { opacity: 0; pointer-events: none; }
+
+.loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: min(90vw, 380px);
+  padding: 0 16px;
+}
+
+.loading-video {
+  width: min(60vw, 62vh, 300px);
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow: 0 0 0 3px var(--panel), 0 0 40px rgba(255, 200, 61, 0.25), 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.loading-title {
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  font-size: 13px;
+  color: var(--text-strong);
+}
+
+.loading-bar-track {
+  width: 100%;
+  height: 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.loading-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--pink), var(--gold));
+  border-radius: 999px;
+  transition: width 0.1s linear;
+}
+
+.loading-pct {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text);
+  letter-spacing: 0.04em;
+}
+
 html, body {
   margin: 0;
   height: 100%;

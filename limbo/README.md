@@ -3,8 +3,11 @@
 A **Limbo-style** demo game: pick a target multiplier (or a win chance %),
 place a bet, and a provably-fair result multiplier is generated. Clear your
 target and you win **bet × target**; fall short and you lose the bet. Built
-with zero dependencies and zero binary assets — the stage art is drawn
-procedurally on canvas and all audio is synthesized with WebAudio.
+with zero dependencies — the stage art is drawn procedurally on canvas and
+all audio is synthesized with WebAudio. The one exception is a shared
+branded loading screen video (`../assets/loading.mp4`, `js/loading.js`):
+it plays once behind a progress bar driven by the video's own playback
+position, then reveals the game.
 
 > **Original game.** "Limbo" (target-multiplier, provably-fair) is a
 > well-known casino-game genre implemented by many platforms — the name,

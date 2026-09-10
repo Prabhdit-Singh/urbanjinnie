@@ -8,6 +8,18 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <!-- loading screen: shown before the game is revealed -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-card">
+      <video class="loading-video" src="../assets/loading.mp4" autoplay muted playsinline></video>
+      <div class="loading-title">APEX LIMBO</div>
+      <div class="loading-bar-track">
+        <div class="loading-bar-fill" id="loadingBarFill"></div>
+      </div>
+      <div class="loading-pct" id="loadingPct">0%</div>
+    </div>
+  </div>
+
   <div id="app">
     <!-- top bar -->
     <header class="topbar">
@@ -281,6 +293,7 @@
     </div>
   </div>
 
+  <script src="js/loading.js"></script>
   <script src="js/sha256.js"></script>
   <script src="js/config.js"></script>
   <script src="js/engine.js"></script>
