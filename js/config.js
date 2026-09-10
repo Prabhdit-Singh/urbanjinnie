@@ -84,7 +84,14 @@
     /* ---- Bet modes ------------------------------------------------------ */
     betModes: {
       base:     { cost: 1.0,  label: 'Base Game' },
-      ante:     { cost: 1.25, label: 'Double Chance' },
+      // cost recalibrated from 1.25 (QA audit: fixing anteScatterMult to
+      // deliver its promised 2x bonus frequency also raises ante's average
+      // win, since bonuses pay much more than base spins — 1.25x wasn't
+      // enough to compensate. 3x3M-round sweep post-fix: EV~=1.2593x bet,
+      // stable across seeds (100.6-100.9% RTP at cost=1.25). New cost =
+      // EV/targetRTP = 1.2593/0.964 ~= 1.306; re-verify with simulate.js
+      // after any further change to anteScatterMult or the base paytable.
+      ante:     { cost: 1.31, label: 'Double Chance' },
       buy:      { cost: 100,  label: 'Bonus Buy',       forcedScatters: { 3: 88, 4: 10, 5: 2 } },
       // cost recalibrated from 500 (QA audit: after fixing the scatter-count
       // inflation bug in engine.js, cost=500 measured ~101.4% RTP across 3

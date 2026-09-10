@@ -103,7 +103,7 @@
       $('btnBuy').disabled = self.ante || self.busy;
       self.renderBet();
       self.message(self.ante
-        ? 'Double Chance on: bet ×1.25, free spins chance doubled.'
+        ? 'Double Chance on: bet ×1.31, free spins chance doubled.'
         : 'Place your bet.');
     });
 
