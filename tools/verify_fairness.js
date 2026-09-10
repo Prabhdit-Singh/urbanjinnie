@@ -12,9 +12,7 @@
  * ========================================================================= */
 'use strict';
 
-require('../js/sha256.js');
-require('../js/config.js');
-require('../js/engine.js');
+require('../js/math.js');
 
 var Sha256 = globalThis.Sha256;
 var CFG = globalThis.GameConfig;

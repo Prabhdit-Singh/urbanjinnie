@@ -7,14 +7,15 @@
  * ~50% run to run. Numerical integration over the RNG's uniform input `r`
  * sidesteps that entirely: it sums payout(r) on a fine deterministic grid
  * instead of sampling r randomly, so it converges to the true expected
- * payout with no variance at all — this is the number config.js's
- * `bonusModes.jackpot.costMultiplier` is actually calibrated against.
+ * payout with no variance at all — this is the number js/math.js's
+ * `GameConfig.bonusModes.jackpot.costMultiplier` is actually calibrated
+ * against.
  *
  * Usage: node tools/jackpot_integral.js [gridSize]
  * ========================================================================= */
 'use strict';
 
-require('../js/config.js');
+require('../js/math.js');
 
 var CFG = globalThis.GameConfig;
 var m = CFG.bonusModes.jackpot;

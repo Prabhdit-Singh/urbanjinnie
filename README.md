@@ -157,16 +157,19 @@ trials — that's the shape of this game's payout distribution, not a bug
 
 ## Architecture
 
-Math and presentation stay cleanly split:
+Math and presentation live in two separate files — nothing in `js/math.js`
+touches the DOM, canvas, or audio, and nothing in `js/frontend.js` decides
+an outcome or a payout:
 
 ```
-js/sha256.js    pure-JS SHA-256 / HMAC-SHA256 (no dependencies)
-js/config.js    math configuration (house edge, target range, bet limits, bonus modes)
-js/engine.js    provably-fair round math; playBet + playRush/playTripleShot/playJackpot; runs in Node + browser
-js/renderer.js  playback only: animates the count-up (and the 3 bonus scenes), never decides outcomes
-js/ui.js        casino shell: wallet, bet panel, autoplay, bonus buy modal, fairness panel
-js/audio.js     WebAudio-synthesized SFX
-tools/          math + fairness verification (run with Node), incl. bonus RTP + Jackpot calibration
+js/math.js      Sha256 (HMAC-SHA256) + GameConfig (house edge, target range, bet limits, bonus modes)
+                + GameEngine (provably-fair round math: playBet + playRush/playTripleShot/playJackpot)
+                runs in Node + browser, zero DOM — this is the whole math surface to audit
+js/frontend.js  loading screen + AudioFx (WebAudio SFX) + Renderer (canvas playback,
+                never decides outcomes) + UI (casino shell: wallet, bet panel, autoplay,
+                bonus buy modal, fairness panel) + bootstrap
+tools/          math + fairness verification (run with Node against js/math.js), incl.
+                bonus RTP + Jackpot calibration
 ```
 
 **Demo entertainment build — no real-money play, no RGS connection.**

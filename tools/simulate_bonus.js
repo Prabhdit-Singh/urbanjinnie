@@ -5,16 +5,14 @@
  * have no free parameters to calibrate (their cost is just "sum of the
  * independent stakes", which is RTP-neutral by construction — this script
  * confirms that empirically). Jackpot Shot's cost multiplier is genuinely
- * calibrated here: it's set in config.js and this script reports the
- * resulting simulated RTP so the number in config.js stays honest.
+ * calibrated here: it's set in js/math.js (GameConfig) and this script
+ * reports the resulting simulated RTP so that number stays honest.
  *
  * Usage: node tools/simulate_bonus.js [rounds] [seed]
  * ========================================================================= */
 'use strict';
 
-require('../js/sha256.js');
-require('../js/config.js');
-require('../js/engine.js');
+require('../js/math.js');
 
 var CFG = globalThis.GameConfig;
 var Engine = globalThis.GameEngine;
@@ -90,7 +88,7 @@ console.log('APEX LIMBO — Bonus Buy math verification\n');
   console.log('Jackpot Shot: a maxWin hit is ~1 in %s — Monte Carlo RTP below will swing hard',
     Math.round(m.maxWin / (1 - CFG.houseEdge)));
   console.log('  around the true value until N is in the tens of millions; the cost multiplier');
-  console.log('  is calibrated analytically instead (theoretical E[payout] = %sx, see config.js).', theoreticalE.toFixed(4));
+  console.log('  is calibrated analytically instead (theoretical E[payout] = %sx, see js/math.js).', theoreticalE.toFixed(4));
   var eng = new Engine(seed + 3);
   var cost = m.costMultiplier;
   var totalCost = 0, totalWin = 0, hits = 0, best = 0;
