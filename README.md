@@ -41,9 +41,9 @@ python3 -m http.server 8000
 | Tumble | Winning clusters pop; symbols fall and refill until no new wins |
 | Multiplier spots | Wins mark their cells. 2nd hit on a mark → ×2, doubling each further hit up to **×1024**. A cluster's pay is multiplied by the **sum** of spot values under it. Marks reset each base-game spin, **persist for the whole bonus** |
 | Free spins | 3/4/5/6/7 scatters → 10/12/14/16/18 spins; 3+ scatters in the bonus → +10 spins; scatters also pay 2–200× |
-| Double Chance | ×1.25 bet, ~2× free-spins trigger frequency (base game only; disables Bonus Buy) |
+| Double Chance | ×1.31 bet, ~2× free-spins trigger frequency (base game only; disables Bonus Buy) |
 | Bonus Buy | 100× bet → guaranteed free spins trigger |
-| Super Bonus Buy | 500× bet → free spins with pre-placed multiplier spots **and** every new mark lands as ×2 instantly |
+| Super Bonus Buy | 525× bet → free spins with pre-placed multiplier spots **and** every new mark lands as ×2 instantly |
 | Max win | 25,000× bet — the round ends immediately at the cap |
 | Target RTP | 96.5% |
 
@@ -85,15 +85,30 @@ node tools/verify_book.js       # event-book contract checks (20k rounds)
 node tools/smoke_render.js      # headless renderer playback test
 ```
 
-Latest 200k-round results (fat-tailed math; exact calibration to 96.5% would
-be done by Stake Engine's optimization step over generated books):
+Latest results, 3×1.5M-round independent seeds per mode post-QA-fixes
+(fat-tailed math for Base/Double Chance — see the multi-seed spread, not a
+single point estimate; Bonus Buy/Super Bonus Buy trigger every round so
+their reading is far tighter):
 
-| Mode | Cost | Simulated RTP | Notes |
+| Mode | Cost | Simulated RTP (3-seed range) | Notes |
 | --- | --- | --- | --- |
-| Base | 1× | ~93–97% | hit rate ~58%, bonus ~1 in 290 |
-| Double Chance | 1.25× | ~91–96% | bonus ~1 in 178 |
-| Bonus Buy | 100× | ~95% | |
-| Super Bonus Buy | 500× | ~98% | |
+| Base | 1× | 95.4–97.5% (avg ~96.7%) | hit rate ~58%, bonus ~1 in 290 |
+| Double Chance | 1.31× | 95.5–96.1% (avg ~95.8%) | bonus ~1 in 150, i.e. ~1.94× base — recalibrated cost (was 1.25×; see QA notes below) |
+| Bonus Buy | 100× | 95.9–97.1% (avg ~96.7%) | |
+| Super Bonus Buy | 525× | 95.8–97.2% (avg ~96.4%) | recalibrated cost (was 500×; see QA notes below) |
+
+**QA history:** an audit found two real bugs affecting these numbers,
+both fixed — (1) `anteScatterMult` was set to 1.20 instead of the 1.26 the
+code's own comment derived, delivering only a ~1.65× bonus-frequency boost
+against the documented "2× bonus chance"; (2) forced-scatter rounds (Bonus
+Buy/Super Bonus Buy) could pick up *extra* scatters during their tumble
+cascade beyond what was forced, inflating both modes' RTP — Super Bonus Buy
+ran with a **negative house edge (>100% RTP)** before this fix. Once fixed,
+Double Chance's corrected 2× frequency legitimately raised its average win
+enough that its original 1.25× cost also needed recalibrating (to 1.31×) to
+land back on target — the same happened for Super Bonus Buy's cost
+(500×→525×) after its own bug fix. See `js/engine.js` and `js/config.js`
+comments for the full derivation of each recalibrated number.
 
 **Demo entertainment build — no real-money play, no RGS connection.** The
 demo wallet is local only (resettable with ↺).
