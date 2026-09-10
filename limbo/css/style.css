@@ -211,6 +211,55 @@ html, body {
 .spin-btn:active:not(:disabled) { transform: translateY(1px); }
 .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .spin-btn.stop { background: var(--red); box-shadow: 0 2px 0 #b32424; color: #fff; }
+.spin-btn.gold { background: linear-gradient(180deg, #ffe9a8, var(--gold) 55%, #e08a00); color: #4d2c00; box-shadow: 0 2px 0 #9a5f00; }
+.spin-btn.pink { background: linear-gradient(180deg, #ffc7ef, var(--pink) 55%, #d630a8); color: #4d0033; box-shadow: 0 2px 0 #a3187e; }
+
+.buy-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 12px;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  color: #4d2c00;
+  background: linear-gradient(180deg, #ffe9a8, var(--gold) 55%, #e08a00);
+  box-shadow: 0 2px 0 #9a5f00;
+}
+.buy-btn:hover:not(:disabled) { filter: brightness(1.06); }
+.buy-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ---- bonus buy modal --------------------------------------------------- */
+.bonus-cards { display: flex; gap: 12px; flex-wrap: wrap; }
+.bonus-card {
+  flex: 1 1 200px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bonus-card.premium { border-color: var(--gold); box-shadow: 0 0 18px rgba(255, 200, 61, 0.15) inset; }
+.bonus-card.extreme { border-color: var(--pink); box-shadow: 0 0 18px rgba(255, 122, 217, 0.18) inset; }
+.bonus-tag {
+  align-self: flex-start;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: var(--line);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+.bonus-card.premium .bonus-tag { color: #4d2c00; background: var(--gold); }
+.bonus-card.extreme .bonus-tag { color: #4d0033; background: var(--pink); }
+.bonus-card h3 { margin: 4px 0 0; color: var(--text-strong); letter-spacing: 0.06em; font-size: 14px; }
+.bonus-card p { margin: 0; font-size: 12px; line-height: 1.5; flex: 1; }
+.bonus-price { font-size: 20px; font-weight: 800; color: var(--gold); }
+.bonus-mult { font-size: 11px; color: #7f8da0; margin-top: -6px; }
 
 .panel-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .lastwin { font-size: 12px; }

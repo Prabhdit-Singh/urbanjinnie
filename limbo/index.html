@@ -64,6 +64,10 @@
             <b id="payoutOut">$2.00</b>
           </div>
 
+          <div class="field">
+            <button id="btnBonus" class="buy-btn">★ Bonus Buy</button>
+          </div>
+
           <div id="manualPane">
             <button id="btnBet" class="spin-btn">Bet</button>
           </div>
@@ -147,6 +151,46 @@
     </main>
   </div>
 
+  <!-- bonus buy modal -->
+  <div id="bonusModal" class="modal">
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <h2>Bonus Buy</h2>
+        <button id="bonusClose" class="icon-btn">✕</button>
+      </div>
+      <div class="bonus-cards">
+        <div class="bonus-card">
+          <div class="bonus-tag">Accessible</div>
+          <h3>RUSH MODE</h3>
+          <p class="muted small">Speed &amp; accumulation</p>
+          <p id="rushDesc">10 rapid-fire shots at your Target Multiplier.</p>
+          <div class="bonus-price" id="rushCost">$10.00</div>
+          <div class="bonus-mult">10× bet</div>
+          <button id="rushConfirm" class="spin-btn">Fire Rush Mode</button>
+        </div>
+        <div class="bonus-card premium">
+          <div class="bonus-tag">Premium</div>
+          <h3>TRIPLE SHOT</h3>
+          <p class="muted small">Three simultaneous chances</p>
+          <p id="tripleDesc">3 independent lanes at fixed targets — hits add up.</p>
+          <div class="bonus-price" id="tripleCost">$3.00</div>
+          <div class="bonus-mult">3× bet</div>
+          <button id="tripleConfirm" class="spin-btn gold">Fire Triple Shot</button>
+        </div>
+        <div class="bonus-card extreme">
+          <div class="bonus-tag">Extreme</div>
+          <h3>JACKPOT SHOT</h3>
+          <p class="muted small">One shot at something enormous</p>
+          <p id="jackpotDesc">MIN WIN 25× · MAX WIN 100,000× — one draw, no wheel.</p>
+          <div class="bonus-price" id="jackpotCost">$9.30</div>
+          <div class="bonus-mult">9.3× bet</div>
+          <button id="jackpotConfirm" class="spin-btn pink">Fire Jackpot Shot</button>
+        </div>
+      </div>
+      <p class="muted small">All three bonuses draw from the exact same provably-fair engine as a normal bet — see the 🔒 panel to verify any of them.</p>
+    </div>
+  </div>
+
   <!-- provably fair modal -->
   <div id="fairModal" class="modal">
     <div class="modal-card wide">
@@ -208,6 +252,13 @@
           <li>A provably-fair result multiplier is generated. If it's <b>≥ your target</b>, you win <b>bet × target</b>. Otherwise you lose the bet.</li>
           <li><b>Win Chance</b> = 99% ÷ target. Lower targets win more often for a smaller payout; higher targets pay big but hit rarely — same expected return either way.</li>
           <li><b>Autoplay</b> can adjust your bet after each win/loss by a percentage, and stop automatically once a profit or loss threshold is reached.</li>
+        </ul>
+        <h3>Bonus Buy</h3>
+        <ul>
+          <li><b>Rush Mode</b> (accessible) — buys 10 rapid-fire shots at your current Target Multiplier. It's exactly 10 independent normal bets fired back to back; cost = 10× bet, same RTP as a normal bet.</li>
+          <li><b>Triple Shot</b> (premium) — buys 3 simultaneous, independent lanes at fixed targets (3× / 10× / 50×). Any number of lanes can hit in the same round and their payouts simply add up; cost = 3× bet.</li>
+          <li><b>Jackpot Shot</b> (extreme) — buys one single draw with a disclosed prize range (MIN WIN 25× – MAX WIN 100,000×). Below the minimum it's a miss; at or above it, the draw's own value (capped at the maximum) becomes the payout — no separate prize table or wheel, just one provably-fair number.</li>
+          <li>All three reuse the exact same <code>HMAC-SHA256</code> draw as a normal bet — see the fairness panel to verify any bonus round the same way you'd verify a normal one.</li>
         </ul>
         <h3>Math</h3>
         <p class="muted">

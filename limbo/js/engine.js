@@ -106,6 +106,57 @@
     };
   };
 
+  /* ---- Bonus Buy modes --------------------------------------------------
+   * All three reduce to one or more independent calls to computeResult()
+   * under sequential nonces from the SAME held server seed — nothing here
+   * is a different RNG or a special-cased draw. That means every shot in
+   * every bonus is exactly as independently verifiable (via the Verify
+   * panel / tools/verify_fairness.js) as a normal bet. */
+
+  // RUSH MODE: `shots` independent bets at one shared target.
+  P.playRush = function (clientSeed, target, shots) {
+    target = Math.max(CFG.target.min, Math.min(CFG.target.max, target));
+    var draws = [];
+    for (var i = 0; i < shots; i++) {
+      var nonce = this.nonce++;
+      var result = computeResult(this.serverSeed, clientSeed, nonce, CFG.houseEdge, CFG.target.max);
+      var win = result >= target;
+      draws.push({ index: i, nonce: nonce, target: target, result: result, win: win, payoutX: win ? target : 0 });
+    }
+    var hits = draws.reduce(function (n, d) { return n + (d.win ? 1 : 0); }, 0);
+    var totalPayoutX = draws.reduce(function (s, d) { return s + d.payoutX; }, 0);
+    return { mode: 'rush', shots: draws, hits: hits, totalPayoutX: totalPayoutX, serverSeedHash: this.serverSeedHash() };
+  };
+
+  // TRIPLE SHOT: independent, simultaneous lanes at fixed targets. Hits
+  // add up (no combined-pay formula) — each lane wins or loses on its own.
+  P.playTripleShot = function (clientSeed, lanes) {
+    var shots = [];
+    for (var i = 0; i < lanes.length; i++) {
+      var nonce = this.nonce++;
+      var result = computeResult(this.serverSeed, clientSeed, nonce, CFG.houseEdge, CFG.target.max);
+      var win = result >= lanes[i];
+      shots.push({ lane: i, nonce: nonce, target: lanes[i], result: result, win: win, payoutX: win ? lanes[i] : 0 });
+    }
+    var hits = shots.reduce(function (n, s) { return n + (s.win ? 1 : 0); }, 0);
+    var totalPayoutX = shots.reduce(function (s, sh) { return s + sh.payoutX; }, 0);
+    return { mode: 'tripleShot', shots: shots, hits: hits, totalPayoutX: totalPayoutX, serverSeedHash: this.serverSeedHash() };
+  };
+
+  // JACKPOT SHOT: one draw. Below minWin it's a plain miss. At/above
+  // minWin the draw has "entered the zone" and its own value (clamped to
+  // maxWin) IS the payout — still one ordinary computeResult() call.
+  P.playJackpot = function (clientSeed, minWin, maxWin) {
+    var nonce = this.nonce++;
+    var result = computeResult(this.serverSeed, clientSeed, nonce, CFG.houseEdge, CFG.target.max);
+    var hit = result >= minWin;
+    var payoutX = hit ? Math.min(result, maxWin) : 0;
+    return {
+      mode: 'jackpot', nonce: nonce, result: result, hit: hit,
+      payoutX: payoutX, minWin: minWin, maxWin: maxWin, serverSeedHash: this.serverSeedHash()
+    };
+  };
+
   GameEngine.computeResult = computeResult;
   g.GameEngine = GameEngine;
 })(typeof window !== 'undefined' ? window : globalThis);

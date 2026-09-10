@@ -33,6 +33,51 @@ python3 -m http.server 8000
 | House edge | 1% → **99% RTP**, constant across the entire target range |
 | Autoplay | Number of bets, on-win/on-loss bet adjustment (reset or increase by %), stop-on-profit and stop-on-loss thresholds |
 | Apex Win | Cosmetic-only celebration when a win clears its target by 5×+ — no effect on math |
+| Bonus Buy | Rush Mode, Triple Shot, Jackpot Shot — see below |
+
+## Bonus Buy modes
+
+Three Bonus Buy options (🎯 Bonus Buy button), each built to answer a
+different player desire rather than being three skins on one mechanic. All
+three still draw from the exact same `computeResult()` HMAC-SHA256 draw a
+normal bet uses — they just take more than one draw, or spend the one draw
+differently — so every shot in every bonus is independently verifiable the
+same way a normal bet is (🔒 panel / `tools/verify_fairness.js`).
+
+| Mode | Volatility | What you buy | Cost | Math |
+| --- | --- | --- | --- | --- |
+| **Rush Mode** (accessible) | Medium-High | 10 rapid-fire shots at your current Target Multiplier | 10× bet | Literally 10 independent normal bets, fired back to back — RTP-neutral by construction (99%) |
+| **Triple Shot** (premium) | High | 3 simultaneous, independent lanes at fixed targets 3× / 10× / 50× — hits add up | 3× bet | 3 independent normal bets at those targets — RTP-neutral by construction (99%) |
+| **Jackpot Shot** (extreme) | Extreme | 1 draw against a disclosed prize range — MIN WIN 25×, MAX WIN 100,000× | 9.30× bet | Below MIN WIN: miss (payout 0). At/above MIN WIN: the draw's *own value*, clamped to MAX WIN, **is** the payout — no separate prize table or wheel |
+
+**Rush Mode** reuses your Target Multiplier field directly — it's not a
+separate setting. The stage reveals shots as a rapid ticker (not a wait for
+one projectile to finish before the next fires) with a live `SHOT n/10 · HITS
+h · WIN x×` readout, ending on a `RUSH COMPLETE` summary.
+
+**Triple Shot**'s three targets come from config, not the player (currently
+the "Balanced" preset — `highRisk` 5×/25×/250× and `extreme` 10×/100×/1000×
+exist in `config.js` for future tuning but aren't wired into the UI). Lanes
+resolve simultaneously side by side; a missed lane dims but the others keep
+counting. Hit counts render as **ONE HIT / DOUBLE HIT / TRIPLE HIT** —
+cosmetic labels only, the payout is always the plain sum of what hit.
+
+**Jackpot Shot** is the one genuinely different payout shape: because the
+underlying result distribution is already heavy-tailed (the same one every
+normal bet uses), conditioning on "at least MIN WIN" and capping at MAX WIN
+naturally puts most winning draws near the low end with progressively rarer
+huge ones — no artificial weighting needed. Its cost (9.30× bet) is
+calibrated **analytically**, not by naive Monte Carlo: a single MAX WIN hit
+is roughly 1-in-101,000, so a simulated RTP reading needs tens of millions
+of rounds before it stops swinging ~50% run to run (see the fat-tail warning
+`tools/simulate_bonus.js` prints). The exact expected payout — and thus the
+exact cost for a chosen RTP — comes from closed-form/numerical integration
+instead:
+
+```bash
+node tools/jackpot_integral.js        # exact calibration, no RNG variance
+node tools/simulate_bonus.js 500000   # RTP check for all 3 modes (Jackpot's reading is noisy — expected)
+```
 
 ## Provably fair — for real
 
@@ -89,12 +134,12 @@ Same math/presentation split as the Candy Surge demo in this repo:
 
 ```
 js/sha256.js    pure-JS SHA-256 / HMAC-SHA256 (no dependencies)
-js/config.js    math configuration (house edge, target range, bet limits)
-js/engine.js    provably-fair round math; runs in Node + browser
-js/renderer.js  playback only: animates the count-up, never decides outcomes
-js/ui.js        casino shell: wallet, bet panel, autoplay, fairness panel
+js/config.js    math configuration (house edge, target range, bet limits, bonus modes)
+js/engine.js    provably-fair round math; playBet + playRush/playTripleShot/playJackpot; runs in Node + browser
+js/renderer.js  playback only: animates the count-up (and the 3 bonus scenes), never decides outcomes
+js/ui.js        casino shell: wallet, bet panel, autoplay, bonus buy modal, fairness panel
 js/audio.js     WebAudio-synthesized SFX
-tools/          math + fairness verification (run with Node)
+tools/          math + fairness verification (run with Node), incl. bonus RTP + Jackpot calibration
 ```
 
 **Demo entertainment build — no real-money play, no RGS connection.**

@@ -16,6 +16,7 @@
 
   function UI(opts) {
     this.onBet = opts.onBet;          // function(target, clientSeed) -> Promise<payoutAmount>
+    this.onBonus = opts.onBonus;      // function(mode, target, clientSeed, turbo) -> Promise<{payout, summary}>
     this.engine = opts.engine;
     this.sfx = opts.sfx;
 
@@ -111,6 +112,7 @@
     $('betInput').disabled = b;
     $('targetInput').disabled = b;
     $('chanceInput').disabled = b;
+    $('btnBonus').disabled = b;
     document.body.classList.toggle('busy', b);
   };
 
@@ -191,6 +193,13 @@
       self.startAuto();
     });
 
+    // bonus buy modal
+    click('btnBonus', function () { self.renderBonusModal(); self.openModal('bonusModal'); });
+    click('bonusClose', function () { self.closeModal('bonusModal'); });
+    click('rushConfirm', function () { self.closeModal('bonusModal'); self.bonus_('rush'); });
+    click('tripleConfirm', function () { self.closeModal('bonusModal'); self.bonus_('tripleShot'); });
+    click('jackpotConfirm', function () { self.closeModal('bonusModal'); self.bonus_('jackpot'); });
+
     // fairness modal
     click('btnFair', function () { self.renderFairness(); self.openModal('fairModal'); });
     click('fairClose', function () { self.closeModal('fairModal'); });
@@ -261,6 +270,60 @@
     $('fairServerHash').value = this.engine.serverSeedHash();
     $('fairClientSeed').value = this.clientSeed;
     $('fairNonce').value = String(this.engine.nonce);
+  };
+
+  /* ---- bonus buy ------------------------------------------------------------ */
+  P.costMultiplierFor = function (mode) {
+    if (mode === 'rush') return CFG.rushCost();
+    if (mode === 'tripleShot') return CFG.tripleShotCost();
+    if (mode === 'jackpot') return CFG.bonusModes.jackpot.costMultiplier;
+    return 0;
+  };
+
+  P.renderBonusModal = function () {
+    var lanes = CFG.tripleShotLanes();
+    var jackpot = CFG.bonusModes.jackpot;
+
+    $('rushDesc').textContent = CFG.bonusModes.rush.shots + ' rapid-fire shots at your Target Multiplier (' +
+      this.target.toFixed(2) + '×).';
+    $('rushCost').textContent = this.fmt(this.costMultiplierFor('rush') * this.bet);
+
+    $('tripleDesc').textContent = lanes.length + ' independent lanes at ' +
+      lanes.map(function (t) { return t + '×'; }).join(' / ') + ' — hits add up.';
+    $('tripleCost').textContent = this.fmt(this.costMultiplierFor('tripleShot') * this.bet);
+
+    $('jackpotDesc').textContent = 'MIN WIN ' + jackpot.minWin + '× · MAX WIN ' +
+      jackpot.maxWin.toLocaleString() + '× — one draw, no wheel.';
+    $('jackpotCost').textContent = this.fmt(this.costMultiplierFor('jackpot') * this.bet);
+  };
+
+  P.bonus_ = function (mode) {
+    var self = this;
+    if (this.busy) return Promise.resolve(false);
+    var cost = this.costMultiplierFor(mode) * this.bet;
+    if (cost > this.balance + 1e-9) {
+      this.message('Insufficient demo balance for this bonus — press ↺ to reset.');
+      return Promise.resolve(false);
+    }
+    this.balance -= cost;
+    this.renderBalance();
+    this.win(0);
+    this.message(CFG.bonusModes[mode].label + ' — good luck!');
+    this.setBusy(true);
+
+    return this.onBonus(mode, this.target, this.clientSeed, this.turbo).then(function (result) {
+      self.balance += result.payout;
+      self.renderBalance();
+      self.renderFairness();
+      self.win(result.payout);
+      self.message(result.summary);
+      self.setBusy(false);
+      return { win: result.payout > 0, profit: result.payout - cost };
+    }).catch(function (err) {
+      console.error(err);
+      self.setBusy(false);
+      return { win: false, profit: -cost };
+    });
   };
 
   /* ---- bet orchestration -------------------------------------------------- */
